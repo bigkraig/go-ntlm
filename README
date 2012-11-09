@@ -15,7 +15,7 @@ negotiate := session.GenerateNegotiateMessage()
 challenge, err := messages.ParseChallengeMessage(challengeBytes)
 session.ProcessChallengeMessage(challenge)
 
-authenticate = session.GenerateAuthenticateMessage()
+authenticate := session.GenerateAuthenticateMessage()
 
 <send authenticate message to server>
 
@@ -39,4 +39,4 @@ Once a session is created you can generate the Mac for a message using:
 
 message := "this is some message to sign"
 sequenceNumber := 100
-session.Mac([]byte(message), sequenceNumber)
+signature, err := session.Mac([]byte(message), sequenceNumber)
