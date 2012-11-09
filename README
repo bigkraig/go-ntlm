@@ -1,0 +1,9 @@
+= NTLM Implementation for Go
+
+== Getting started
+
+# Set your GOPATH
+export GOPATH=`pwd`
+
+# Retrieve all remote packages
+go get all
