@@ -96,6 +96,7 @@ func (n *V1Session) Sign(message []byte) ([]byte, error) {
 }
 
 func (n *V1Session) Mac(message []byte, sequenceNumber int) ([]byte, error) {
+	// TODO: Need to keep track of the sequence number for connection oriented NTLM
 	sig := mac(n.negotiateFlags, n.serverHandle, n.serverSigningKey, uint32(sequenceNumber), message)
 	return sig.Bytes(), nil
 }

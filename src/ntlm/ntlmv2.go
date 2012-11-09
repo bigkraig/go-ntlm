@@ -63,6 +63,7 @@ func (n *V2Session) Sign(message []byte) ([]byte, error) {
 	return nil, nil
 }
 func (n *V2Session) Mac(message []byte,sequenceNumber int) ([]byte, error) {
+	// TODO: Need to keep track of the sequence number for connection oriented NTLM
 	return nil, nil
 }
 
