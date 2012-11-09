@@ -1,16 +1,16 @@
 = NTLM Implementation for Go
 
-== Sample Usage
+== Sample Usage as NTLM Client
 
 import "ntlm"
 import "ntlm/messages"
 
-session = NewClientSession(ntlm.Version1, ntlm.ConnectionlessMode)
+session = ntlm.NewClientSession(ntlm.Version1, ntlm.ConnectionlessMode)
 session.SetUserInfo("someuser","somepassword","somedomain")
 
-challenge = session.GenerateNegotiateMessage()
+negotiate := session.GenerateNegotiateMessage()
 
-<send challenge to server>
+<send negotiate to server>
 
 challenge, err := messages.ParseChallengeMessage(challengeBytes)
 session.ProcessChallengeMessage(challenge)
@@ -18,3 +18,25 @@ session.ProcessChallengeMessage(challenge)
 authenticate = session.GenerateAuthenticateMessage()
 
 <send authenticate message to server>
+
+== Sample Usage as NTLM Server
+
+session = ntlm.NewServerSession(ntlm.Version1, ntlm.ConnectionlessMode)
+session.SetUserInfo("someuser","somepassword","somedomain")
+
+challenge := session.GenerateChallengeMessage()
+
+<send challenge to client>
+
+<receive authentication bytes>
+
+auth, err := messages.ParseAuthentiateMessage(authenticateBytes)
+session.ProcessAuthenticateMessage(auth)
+
+== Generating a message MAC
+
+Once a session is created you can generate the Mac for a message using:
+
+message := "this is some message to sign"
+sequenceNumber := 100
+session.Mac([]byte(message), sequenceNumber)
