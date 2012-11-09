@@ -1,9 +1,20 @@
 = NTLM Implementation for Go
 
-== Getting started
+== Sample Usage
 
-# Set your GOPATH
-export GOPATH=`pwd`
+import "ntlm"
+import "ntlm/messages"
 
-# Retrieve all remote packages
-go get all
+session = NewClientSession(ntlm.Version1, ntlm.ConnectionlessMode)
+session.SetUserInfo("someuser","somepassword","somedomain")
+
+challenge = session.GenerateNegotiateMessage()
+
+<send challenge to server>
+
+challenge, err := messages.ParseChallengeMessage(challengeBytes)
+session.ProcessChallengeMessage(challenge)
+
+authenticate = session.GenerateAuthenticateMessage()
+
+<send authenticate message to server>
