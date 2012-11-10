@@ -9,9 +9,6 @@ import (
 )
 
 type Challenge struct {
-	// All bytes of the message
-	Bytes []byte
-
 	// sig - 8 bytes
 	Signature []byte
 	// message type - 4 bytes
@@ -52,7 +49,6 @@ type Challenge struct {
 	Version *VersionStruct
 	// payload - variable
 	Payload       []byte
-	PayloadOffset int
 }
 
 func ParseChallengeMessage(body []byte) (*Challenge, error) {
@@ -71,9 +67,7 @@ func ParseChallengeMessage(body []byte) (*Challenge, error) {
 	var err error
 
 	challenge.TargetName, err = ReadStringPayload(12, body)
-	if err != nil {
-		return challenge, err
-	}
+	if err != nil { return nil, err }
 
 	challenge.NegotiateFlags = binary.LittleEndian.Uint32(body[20:24])
 
@@ -82,9 +76,7 @@ func ParseChallengeMessage(body []byte) (*Challenge, error) {
 	challenge.Reserved = body[32:40]
 
 	challenge.TargetInfoPayloadStruct, err = ReadBytePayload(40, body)
-	if err != nil {
-		return challenge, err
-	}
+	if err != nil { return nil, err }
 
 	challenge.TargetInfo = ReadAvPairs(challenge.TargetInfoPayloadStruct.Payload)
 
@@ -92,16 +84,46 @@ func ParseChallengeMessage(body []byte) (*Challenge, error) {
 
 	if NTLMSSP_NEGOTIATE_VERSION.IsSet(challenge.NegotiateFlags) {
 		challenge.Version, err = ReadVersionStruct(body[offset : offset+8])
-		if err != nil {
-			return challenge, err
-		}
+	  if err != nil { return nil, err }
 		offset = offset + 8
 	}
 
 	challenge.Payload = body[offset:]
-	challenge.PayloadOffset = offset
 
 	return challenge, nil
+}
+
+func (c *Challenge) Bytes() []byte {
+	payloadLen := int(c.TargetName.Len + c.TargetInfoPayloadStruct.Len)
+	messageLen := 8 + 4 + 12 + 4 + 8 + 8 + 12 + 8
+	payloadOffset := uint32(messageLen)
+
+	messageBytes := make([]byte, 0, messageLen+payloadLen)
+	buffer := bytes.NewBuffer(messageBytes)
+
+	buffer.Write(c.Signature)
+	binary.Write(buffer, binary.LittleEndian, c.MessageType)
+  
+	c.TargetName.Offset = payloadOffset
+	payloadOffset += uint32(c.TargetName.Len)
+	buffer.Write(c.TargetName.Bytes())
+
+	binary.Write(buffer, binary.LittleEndian, c.NegotiateFlags)
+	buffer.Write(c.ServerChallenge)
+  buffer.Write(make([]byte, 8))
+
+  c.TargetInfoPayloadStruct.Offset = payloadOffset
+  payloadOffset += uint32(c.TargetInfoPayloadStruct.Len)
+  buffer.Write(c.TargetInfoPayloadStruct.Bytes())
+  if(c.Version != nil) {
+    buffer.Write(c.Version.Bytes())
+  }
+
+	// Write out the payloads
+	buffer.Write(c.TargetName.Payload)
+	buffer.Write(c.TargetInfoPayloadStruct.Payload)
+
+	return buffer.Bytes()
 }
 
 func (c *Challenge) getLowestPayloadOffset() int {
@@ -123,7 +145,7 @@ func (c *Challenge) String() string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("Challenge NTLM Message")
-	buffer.WriteString(fmt.Sprintf("\nPayload Offset: %d Lowest: %d Length: %d", c.PayloadOffset, c.getLowestPayloadOffset(), len(c.Payload)))
+	buffer.WriteString(fmt.Sprintf("\nPayload Offset: %d Length: %d", c.getLowestPayloadOffset(), len(c.Payload)))
 	buffer.WriteString(fmt.Sprintf("\nTargetName: %s", c.TargetName.String()))
 	buffer.WriteString(fmt.Sprintf("\nServerChallenge: %s", hex.EncodeToString(c.ServerChallenge)))
 	if c.Version != nil {
