@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"reflect"
 )
 
 type AvPairType uint16
@@ -43,6 +42,11 @@ const (
 // Helper struct that contains a list of AvPairs with helper methods for running through them
 type AvPairs struct {
 	List []AvPair
+}
+
+func (p *AvPairs) AddAvPair(avId AvPairType, bytes []byte) {
+	a := &AvPair{AvId: avId, AvLen: uint16(len(bytes)), Value: bytes}
+  p.List = append(p.List, *a)
 }
 
 func ReadAvPairs(data []byte) *AvPairs {
@@ -153,10 +157,26 @@ func (a *AvPair) String() string {
 	switch a.AvId {
 	case MsvAvEOL:
 		outString = "MsvAvEOL"
-	case MsvAvNbComputerName, MsvAvNbDomainName, MsvAvDnsComputerName, MsvAvDnsDomainName, MsvAvDnsTreeName, MsvAvTargetName:
-		outString = fmt.Sprintf("%s: %s", reflect.TypeOf(a.AvId).Name(), a.UnicodeStringValue())
-	case MsvAvFlags, MsvAvTimestamp, MsAvRestrictions, MsvChannelBindings:
-		outString = fmt.Sprintf("%s: %s", reflect.TypeOf(a.AvId).Name(), hex.EncodeToString(a.Value))
+	case MsvAvNbComputerName:
+		outString = "MsAvNbComputerName: " + a.UnicodeStringValue()
+	case MsvAvNbDomainName:
+		outString = "MsvAvNbDomainName: " + a.UnicodeStringValue()
+	case MsvAvDnsComputerName:
+		outString = "MsvAvDnsComputerName: " + a.UnicodeStringValue()
+	case MsvAvDnsDomainName:
+		outString = "MsvAvDnsDomainName: " + a.UnicodeStringValue()
+	case MsvAvDnsTreeName:
+		outString = "MsvAvDnsTreeName: " + a.UnicodeStringValue()
+	case MsvAvFlags:
+		outString = "MsvAvFlags: " + hex.EncodeToString(a.Value)
+	case MsvAvTimestamp:
+		outString = "MsvAvTimestamp: " + hex.EncodeToString(a.Value)
+	case MsAvRestrictions:
+		outString = "MsAvRestrictions: " + hex.EncodeToString(a.Value)
+	case MsvAvTargetName:
+		outString = "MsvAvTargetName: " + a.UnicodeStringValue()
+	case MsvChannelBindings:
+		outString = "MsvChannelBindings: " + hex.EncodeToString(a.Value)
 	default:
 		outString = fmt.Sprintf("unknown pair type: '%d'", a.AvId)
 	}

@@ -95,7 +95,7 @@ func ParseChallengeMessage(body []byte) (*Challenge, error) {
 
 func (c *Challenge) Bytes() []byte {
 	payloadLen := int(c.TargetName.Len + c.TargetInfoPayloadStruct.Len)
-	messageLen := 8 + 4 + 12 + 4 + 8 + 8 + 12 + 8
+	messageLen := 8 + 4 + 8 + 4 + 8 + 8 + 8 + 8
 	payloadOffset := uint32(messageLen)
 
 	messageBytes := make([]byte, 0, messageLen+payloadLen)
@@ -105,18 +105,21 @@ func (c *Challenge) Bytes() []byte {
 	binary.Write(buffer, binary.LittleEndian, c.MessageType)
   
 	c.TargetName.Offset = payloadOffset
-	payloadOffset += uint32(c.TargetName.Len)
 	buffer.Write(c.TargetName.Bytes())
+	payloadOffset += uint32(c.TargetName.Len)
 
 	binary.Write(buffer, binary.LittleEndian, c.NegotiateFlags)
 	buffer.Write(c.ServerChallenge)
   buffer.Write(make([]byte, 8))
 
   c.TargetInfoPayloadStruct.Offset = payloadOffset
-  payloadOffset += uint32(c.TargetInfoPayloadStruct.Len)
   buffer.Write(c.TargetInfoPayloadStruct.Bytes())
+  payloadOffset += uint32(c.TargetInfoPayloadStruct.Len)
+
   if(c.Version != nil) {
     buffer.Write(c.Version.Bytes())
+  } else {
+	  buffer.Write(make([]byte, 8))
   }
 
 	// Write out the payloads

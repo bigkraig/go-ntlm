@@ -46,4 +46,18 @@ func TestDecodeChallenge(t *testing.T) {
 	}
 
 	challenge.String()
+	
+	outBytes := challenge.Bytes()
+
+	if len(outBytes) > 0 {
+		reparsed, err := ParseChallengeMessage(outBytes)
+		if err != nil {
+			t.Error("Could not re-parse challenge message")
+		}
+		if reparsed.String() != challenge.String() {
+			t.Error("Reparsed message is not the same")
+		}
+	} else {
+		t.Error("Invalid challenge messsage bytes")
+	}
 }

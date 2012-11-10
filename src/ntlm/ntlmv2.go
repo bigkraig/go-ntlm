@@ -81,8 +81,42 @@ func (n *V2ServerSession) ProcessNegotiateMessage(nm *messages.Negotiate) (err e
 }
 
 func (n *V2ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, err error) {
-	// TODO: Generate this challenge message
-	return
+	cm = new(messages.Challenge)
+	cm.Signature = []byte("NTLMSSP\x00")
+	cm.MessageType = uint32(2)
+	cm.TargetName,_ = messages.CreateBytePayload(make([]byte, 0))
+
+	flags := uint32(0)
+	flags = messages.NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
+  // NOTE: Unsetting this in order for the signatures to work
+  // flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
+  flags = messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_TARGET_INFO.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_IDENTIFY.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_ALWAYS_SIGN.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_NTLM.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_DATAGRAM.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_SIGN.Set(flags)
+	flags = messages.NTLMSSP_REQUEST_TARGET.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
+	cm.NegotiateFlags = flags
+
+	cm.ServerChallenge = randomBytes(8)
+	cm.Reserved = make([]byte, 8)
+	
+	// Create the AvPairs we need
+	pairs := new(messages.AvPairs)
+	pairs.AddAvPair(messages.MsvAvNbDomainName, messages.StringToUtf16("REUTERS"))
+	pairs.AddAvPair(messages.MsvAvNbComputerName, messages.StringToUtf16("UKBP-CBTRMFE06"))
+	pairs.AddAvPair(messages.MsvAvDnsDomainName, messages.StringToUtf16("Reuters.net"))
+	pairs.AddAvPair(messages.MsvAvDnsComputerName, messages.StringToUtf16("ukbp-cbtrmfe06.Reuters.net"))
+  pairs.AddAvPair(messages.MsvAvDnsTreeName, messages.StringToUtf16("Reuters.net"))
+	pairs.AddAvPair(messages.MsvAvEOL, make([]byte, 0))
+	cm.TargetInfo = pairs
+  cm.TargetInfoPayloadStruct,_ = messages.CreateBytePayload(pairs.Bytes())
+
+	cm.Version = &messages.VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: uint8(10)}
+	return cm, nil
 }
 
 func (n *V2ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) (err error) {

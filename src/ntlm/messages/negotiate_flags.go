@@ -138,6 +138,34 @@ func (f NegotiateFlag) String() string {
 	return reflect.TypeOf(f).Name()
 }
 
+func GetFlagName(flag NegotiateFlag) string {
+	nameMap := map[NegotiateFlag]string{
+		NTLMSSP_NEGOTIATE_56:                       "NTLMSSP_NEGOTIATE_56",
+		NTLMSSP_NEGOTIATE_KEY_EXCH:                 "NTLMSSP_NEGOTIATE_KEY_EXCH",
+		NTLMSSP_NEGOTIATE_128:                      "NTLMSSP_NEGOTIATE_128",
+		NTLMSSP_NEGOTIATE_VERSION:                  "NTLMSSP_NEGOTIATE_VERSION",
+		NTLMSSP_NEGOTIATE_TARGET_INFO:              "NTLMSSP_NEGOTIATE_TARGET_INFO",
+		NTLMSSP_REQUEST_NON_NT_SESSION_KEY:         "NTLMSSP_REQUEST_NON_NT_SESSION_KEY",
+		NTLMSSP_NEGOTIATE_IDENTIFY:                 "NTLMSSP_NEGOTIATE_IDENTIFY",
+		NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY: "NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY",
+		NTLMSSP_TARGET_TYPE_SERVER:                 "NTLMSSP_TARGET_TYPE_SERVER",
+		NTLMSSP_TARGET_TYPE_DOMAIN:                 "NTLMSSP_TARGET_TYPE_DOMAIN",
+		NTLMSSP_NEGOTIATE_ALWAYS_SIGN:              "NTLMSSP_NEGOTIATE_ALWAYS_SIGN",
+		NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED: "NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED",
+		NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED:      "NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED",
+		NTLMSSP_ANONYMOUS:                          "NTLMSSP_ANONYMOUS",
+		NTLMSSP_NEGOTIATE_NTLM:                     "NTLMSSP_NEGOTIATE_NTLM",
+		NTLMSSP_NEGOTIATE_LM_KEY:                   "NTLMSSP_NEGOTIATE_LM_KEY",
+		NTLMSSP_NEGOTIATE_DATAGRAM:                 "NTLMSSP_NEGOTIATE_DATAGRAM",
+		NTLMSSP_NEGOTIATE_SEAL:                     "NTLMSSP_NEGOTIATE_SEAL",
+		NTLMSSP_NEGOTIATE_SIGN:                     "NTLMSSP_NEGOTIATE_SIGN",
+		NTLMSSP_REQUEST_TARGET:                     "NTLMSSP_REQUEST_TARGET",
+		NTLM_NEGOTIATE_OEM:                         "NTLM_NEGOTIATE_OEM",
+		NTLMSSP_NEGOTIATE_UNICODE:                  "NTLMSSP_NEGOTIATE_UNICODE"}
+
+	return nameMap[flag]
+}
+
 func FlagsToString(flags uint32) string {
 	allFlags := [...]NegotiateFlag{
 		NTLMSSP_NEGOTIATE_56,
@@ -166,7 +194,7 @@ func FlagsToString(flags uint32) string {
 	var buffer bytes.Buffer
 	for i := range allFlags {
 		f := allFlags[i]
-		buffer.WriteString(fmt.Sprintf("%s: %v\n", f.String(), f.IsSet(flags)))
+		buffer.WriteString(fmt.Sprintf("%s: %v\n", GetFlagName(f), f.IsSet(flags)))
 	}
 	return buffer.String()
 }

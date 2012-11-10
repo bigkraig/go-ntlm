@@ -62,14 +62,14 @@ func TestNTLMv2(t *testing.T) {
 	challengeMessageBytes, _ := hex.DecodeString("4e544c4d53535000020000000c000c003800000033828ae20123456789abcdef00000000000000002400240044000000060070170000000f53006500720076006500720002000c0044006f006d00610069006e0001000c0053006500720076006500720000000000")
 	challengeMessage, err := messages.ParseChallengeMessage(challengeMessageBytes)
 	if err == nil {
-		challengeMessage.String()
+	        challengeMessage.String()
 	} else {
-		t.Errorf("Could not parse challenge message: %s", err)
+	        t.Errorf("Could not parse challenge message: %s", err)
 	}
 
 	err = client.ProcessChallengeMessage(challengeMessage)
 	if err != nil {
-		t.Errorf("Could not process challenge message: %s", err)
+	        t.Errorf("Could not process challenge message: %s", err)
 	}
 
 	server := new(V2ServerSession)
@@ -113,4 +113,16 @@ func TestNTLMv2(t *testing.T) {
 
 	checkV2Value(t, "client seal key", server.clientSealingKey, "59f600973cc4960a25480a7c196e4c58", nil)
 	checkV2Value(t, "client seal key", server.clientSigningKey, "4788dc861b4782f35d43fd98fe1a2d39", nil)
+	
+	// Have the server generate an initial challenge message
+	challenge, err := server.GenerateChallengeMessage()
+	challenge.String()
+
+  // Have the client process this server challenge message
+	client = new(V2ClientSession)
+	client.SetUserInfo("User", "Password", "Domain")
+	err = client.ProcessChallengeMessage(challenge)
+	if err != nil {
+	  t.Errorf("Could not process server generated challenge message: %s", err)
+	}
 }
