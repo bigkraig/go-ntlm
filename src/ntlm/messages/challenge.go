@@ -48,7 +48,7 @@ type Challenge struct {
 	// version - 8 bytes
 	Version *VersionStruct
 	// payload - variable
-	Payload       []byte
+	Payload []byte
 }
 
 func ParseChallengeMessage(body []byte) (*Challenge, error) {
@@ -67,7 +67,9 @@ func ParseChallengeMessage(body []byte) (*Challenge, error) {
 	var err error
 
 	challenge.TargetName, err = ReadStringPayload(12, body)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 
 	challenge.NegotiateFlags = binary.LittleEndian.Uint32(body[20:24])
 
@@ -76,7 +78,9 @@ func ParseChallengeMessage(body []byte) (*Challenge, error) {
 	challenge.Reserved = body[32:40]
 
 	challenge.TargetInfoPayloadStruct, err = ReadBytePayload(40, body)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 
 	challenge.TargetInfo = ReadAvPairs(challenge.TargetInfoPayloadStruct.Payload)
 
@@ -84,7 +88,9 @@ func ParseChallengeMessage(body []byte) (*Challenge, error) {
 
 	if NTLMSSP_NEGOTIATE_VERSION.IsSet(challenge.NegotiateFlags) {
 		challenge.Version, err = ReadVersionStruct(body[offset : offset+8])
-	  if err != nil { return nil, err }
+		if err != nil {
+			return nil, err
+		}
 		offset = offset + 8
 	}
 
@@ -103,24 +109,24 @@ func (c *Challenge) Bytes() []byte {
 
 	buffer.Write(c.Signature)
 	binary.Write(buffer, binary.LittleEndian, c.MessageType)
-  
+
 	c.TargetName.Offset = payloadOffset
 	buffer.Write(c.TargetName.Bytes())
 	payloadOffset += uint32(c.TargetName.Len)
 
 	binary.Write(buffer, binary.LittleEndian, c.NegotiateFlags)
 	buffer.Write(c.ServerChallenge)
-  buffer.Write(make([]byte, 8))
+	buffer.Write(make([]byte, 8))
 
-  c.TargetInfoPayloadStruct.Offset = payloadOffset
-  buffer.Write(c.TargetInfoPayloadStruct.Bytes())
-  payloadOffset += uint32(c.TargetInfoPayloadStruct.Len)
+	c.TargetInfoPayloadStruct.Offset = payloadOffset
+	buffer.Write(c.TargetInfoPayloadStruct.Bytes())
+	payloadOffset += uint32(c.TargetInfoPayloadStruct.Len)
 
-  if(c.Version != nil) {
-    buffer.Write(c.Version.Bytes())
-  } else {
-	  buffer.Write(make([]byte, 8))
-  }
+	if c.Version != nil {
+		buffer.Write(c.Version.Bytes())
+	} else {
+		buffer.Write(make([]byte, 8))
+	}
 
 	// Write out the payloads
 	buffer.Write(c.TargetName.Payload)

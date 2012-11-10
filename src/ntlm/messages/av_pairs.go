@@ -46,7 +46,7 @@ type AvPairs struct {
 
 func (p *AvPairs) AddAvPair(avId AvPairType, bytes []byte) {
 	a := &AvPair{AvId: avId, AvLen: uint16(len(bytes)), Value: bytes}
-  p.List = append(p.List, *a)
+	p.List = append(p.List, *a)
 }
 
 func ReadAvPairs(data []byte) *AvPairs {

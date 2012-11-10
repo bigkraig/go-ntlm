@@ -46,7 +46,7 @@ func TestDecodeChallenge(t *testing.T) {
 	}
 
 	challenge.String()
-	
+
 	outBytes := challenge.Bytes()
 
 	if len(outBytes) > 0 {

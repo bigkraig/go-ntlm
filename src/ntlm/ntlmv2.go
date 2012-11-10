@@ -23,7 +23,7 @@ func (n *V2Session) SetUserInfo(username string, password string, domain string)
 }
 
 func (n *V2Session) SetMode(mode Mode) {
-  n.mode = mode
+	n.mode = mode
 }
 
 func (n *V2Session) fetchResponseKeys() (err error) {
@@ -62,7 +62,7 @@ func (n *V2Session) Seal(message []byte) ([]byte, error) {
 func (n *V2Session) Sign(message []byte) ([]byte, error) {
 	return nil, nil
 }
-func (n *V2Session) Mac(message []byte,sequenceNumber int) ([]byte, error) {
+func (n *V2Session) Mac(message []byte, sequenceNumber int) ([]byte, error) {
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
 	return nil, nil
 }
@@ -84,13 +84,13 @@ func (n *V2ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, er
 	cm = new(messages.Challenge)
 	cm.Signature = []byte("NTLMSSP\x00")
 	cm.MessageType = uint32(2)
-	cm.TargetName,_ = messages.CreateBytePayload(make([]byte, 0))
+	cm.TargetName, _ = messages.CreateBytePayload(make([]byte, 0))
 
 	flags := uint32(0)
 	flags = messages.NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
-  // NOTE: Unsetting this in order for the signatures to work
-  // flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
-  flags = messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
+	// NOTE: Unsetting this in order for the signatures to work
+	flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_TARGET_INFO.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_IDENTIFY.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_ALWAYS_SIGN.Set(flags)
@@ -101,21 +101,22 @@ func (n *V2ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, er
 	flags = messages.NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
 	cm.NegotiateFlags = flags
 
-	cm.ServerChallenge = randomBytes(8)
+	n.serverChallenge = randomBytes(8)
+	cm.ServerChallenge = n.serverChallenge
 	cm.Reserved = make([]byte, 8)
-	
+
 	// Create the AvPairs we need
 	pairs := new(messages.AvPairs)
 	pairs.AddAvPair(messages.MsvAvNbDomainName, messages.StringToUtf16("REUTERS"))
 	pairs.AddAvPair(messages.MsvAvNbComputerName, messages.StringToUtf16("UKBP-CBTRMFE06"))
 	pairs.AddAvPair(messages.MsvAvDnsDomainName, messages.StringToUtf16("Reuters.net"))
 	pairs.AddAvPair(messages.MsvAvDnsComputerName, messages.StringToUtf16("ukbp-cbtrmfe06.Reuters.net"))
-  pairs.AddAvPair(messages.MsvAvDnsTreeName, messages.StringToUtf16("Reuters.net"))
+	pairs.AddAvPair(messages.MsvAvDnsTreeName, messages.StringToUtf16("Reuters.net"))
 	pairs.AddAvPair(messages.MsvAvEOL, make([]byte, 0))
 	cm.TargetInfo = pairs
-  cm.TargetInfoPayloadStruct,_ = messages.CreateBytePayload(pairs.Bytes())
+	cm.TargetInfoPayloadStruct, _ = messages.CreateBytePayload(pairs.Bytes())
 
-	cm.Version = &messages.VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: uint8(10)}
+	cm.Version = &messages.VersionStruct{ProductMajorVersion: uint8(6), ProductMinorVersion: uint8(0), ProductBuild: uint16(2600), NTLMRevisionCurrent: uint8(10)}
 	return cm, nil
 }
 

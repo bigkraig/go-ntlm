@@ -23,7 +23,7 @@ func (n *V1Session) SetUserInfo(username string, password string, domain string)
 }
 
 func (n *V1Session) SetMode(mode Mode) {
-  n.mode = mode
+	n.mode = mode
 }
 
 func (n *V1Session) fetchResponseKeys() (err error) {
@@ -214,7 +214,7 @@ func (n *V1ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err e
 	flags := uint32(0)
 	flags = messages.NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
 	// NOTE: Unsetting this flag in order to get the server to generate the signatures we can recognize
-  // flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
+	// flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_TARGET_INFO.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_IDENTIFY.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_ALWAYS_SIGN.Set(flags)
