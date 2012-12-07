@@ -6,6 +6,7 @@ import (
 	"ntlm/messages"
 	"strings"
 	"testing"
+	"time"
 )
 
 func checkV2Value(t *testing.T, name string, value []byte, expected string, err error) {
@@ -125,4 +126,16 @@ func TestNTLMv2(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not process server generated challenge message: %s", err)
 	}
+}
+
+func TestWindowsTimeConversion(t *testing.T) {
+	// From http://davenport.sourceforge.net/ntlm.html#theType3Message
+	// Next, the blob is constructed. The timestamp is the most tedious part of this; looking at the clock on my desk, 
+	// it's about 6:00 AM EDT on June 17th, 2003. In Unix time, that would be 1055844000 seconds after the Epoch. 
+	// Adding 11644473600 will give us seconds after January 1, 1601 (12700317600). Multiplying by 107 (10000000) 
+	// will give us tenths of a microsecond (127003176000000000). As a little-endian 64-bit value, this is 
+	// "0x0090d336b734c301" (in hexadecimal).
+	unix := time.Unix(1055844000, 0)
+	result := timeToWindowsFileTime(unix)
+	checkV2Value(t, "Timestamp", result, "0090d336b734c301", nil)
 }

@@ -211,7 +211,12 @@ func (a *Authenticate) Bytes() []byte {
 	buffer.Write(a.EncryptedRandomSessionKey.Bytes())
 
 	buffer.Write(Uint32ToBytes(a.NegotiateFlags))
-	buffer.Write(a.Version.Bytes())
+
+	if a.Version != nil {
+		buffer.Write(a.Version.Bytes())
+	} else {
+		buffer.Write(make([]byte, 8))
+	}
 
 	if a.Mic != nil {
 		buffer.Write(a.Mic)

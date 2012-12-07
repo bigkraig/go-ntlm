@@ -9,6 +9,7 @@ import (
 )
 
 type NtlmsspMessageSignature struct {
+	ByteData []byte
 	// A 32-bit unsigned integer that contains the signature version. This field MUST be 0x00000001.
 	Version []byte
 	// A 4-byte array that contains the random pad for the message.
@@ -24,7 +25,12 @@ func (n *NtlmsspMessageSignature) String() string {
 }
 
 func (n *NtlmsspMessageSignature) Bytes() []byte {
-	return concat(n.Version, n.RandomPad, n.CheckSum, n.SeqNum)
+	if n.ByteData != nil {
+		return n.ByteData
+	} else {
+		return concat(n.Version, n.RandomPad, n.CheckSum, n.SeqNum)
+	}
+	return nil
 }
 
 // Define SEAL(Handle, SigningKey, SeqNum, Message) as
@@ -53,7 +59,7 @@ func mac(negFlags uint32, handle *rc4P.Cipher, signingKey []byte, seqNum uint32,
 // Set NTLMSSP_MESSAGE_SIGNATURE.Checksum to CRC32(Message)
 // Set NTLMSSP_MESSAGE_SIGNATURE.RandomPad RC4(Handle, RandomPad)
 // Set NTLMSSP_MESSAGE_SIGNATURE.Checksum to RC4(Handle, NTLMSSP_MESSAGE_SIGNATURE.Checksum)
-// Set NTLMSSP_MESSAGE_SIGNATURE.SeqNum to RC4(Handle, 0x00000000) 
+// Set NTLMSSP_MESSAGE_SIGNATURE.SeqNum to RC4(Handle, 0x00000000)
 // If (connection oriented)
 //   Set NTLMSSP_MESSAGE_SIGNATURE.SeqNum to NTLMSSP_MESSAGE_SIGNATURE.SeqNum XOR SeqNum
 //   Set SeqNum to SeqNum + 1
@@ -78,18 +84,17 @@ func macWithoutExtendedSessionSecurity(handle *rc4P.Cipher, seqNum uint32, messa
 		sig.SeqNum[i] = sig.SeqNum[i] ^ seqNumBytes[i]
 	}
 	sig.RandomPad = zeroBytes(4)
-
 	return sig
 }
 
 // Define MAC(Handle, SigningKey, SeqNum, Message) as
-// Set NTLMSSP_MESSAGE_SIGNATURE.Version to 0x00000001 
+// Set NTLMSSP_MESSAGE_SIGNATURE.Version to 0x00000001
 // if Key Exchange Key Negotiated
 //   Set NTLMSSP_MESSAGE_SIGNATURE.Checksum to RC4(Handle, HMAC_MD5(SigningKey, ConcatenationOf(SeqNum, Message))[0..7])
 // else
-//   Set NTLMSSP_MESSAGE_SIGNATURE.Checksum to HMAC_MD5(SigningKey, ConcatenationOf(SeqNum, Message))[0..7] 
+//   Set NTLMSSP_MESSAGE_SIGNATURE.Checksum to HMAC_MD5(SigningKey, ConcatenationOf(SeqNum, Message))[0..7]
 // end
-// Set NTLMSSP_MESSAGE_SIGNATURE.SeqNum to SeqNum 
+// Set NTLMSSP_MESSAGE_SIGNATURE.SeqNum to SeqNum
 // Set SeqNum to SeqNum + 1
 // EndDefine
 func macWithExtendedSessionSecurity(negFlags uint32, handle *rc4P.Cipher, signingKey []byte, seqNum uint32, message []byte) *NtlmsspMessageSignature {

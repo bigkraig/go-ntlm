@@ -122,11 +122,11 @@ func (c *Challenge) Bytes() []byte {
 	buffer.Write(c.TargetInfoPayloadStruct.Bytes())
 	payloadOffset += uint32(c.TargetInfoPayloadStruct.Len)
 
-	if c.Version != nil {
-		buffer.Write(c.Version.Bytes())
-	} else {
-		buffer.Write(make([]byte, 8))
-	}
+	// if(c.Version != nil) {
+	buffer.Write(c.Version.Bytes())
+	// } else {
+	//  buffer.Write(make([]byte, 8))
+	//}
 
 	// Write out the payloads
 	buffer.Write(c.TargetName.Payload)

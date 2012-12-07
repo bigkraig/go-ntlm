@@ -71,6 +71,7 @@ func CreateServerSession(version Version, mode Mode) (n ServerSession, err error
 type ServerSession interface {
 	SetUserInfo(username string, password string, domain string)
 	SetMode(mode Mode)
+	SetServerChallenge(challege []byte)
 
 	ProcessNegotiateMessage(*messages.Negotiate) error
 	GenerateChallengeMessage() (*messages.Challenge, error)

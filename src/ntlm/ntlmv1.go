@@ -79,7 +79,15 @@ func (n *V1Session) computeKeyExchangeKey() (err error) {
 	return
 }
 
-func (n *V1Session) calculateKeys() (err error) {
+func (n *V1Session) calculateKeys(ntlmRevisionCurrent uint8) (err error) {
+	// This lovely piece of code comes courtesy of an the excellent Open Document support system from MSFT
+	// In order to calculate the keys correctly when the client has set the NTLMRevisionCurrent to 0xF (15)
+	// We must treat the flags as if NTLMSSP_NEGOTIATE_LM_KEY is set.
+	// This information is not contained (at least currently, until they correct it) in the MS-NLMP document
+	if ntlmRevisionCurrent == 15 {
+		n.negotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Set(n.negotiateFlags)
+	}
+
 	n.clientSigningKey = signKey(n.negotiateFlags, n.exportedSessionKey, "Client")
 	n.serverSigningKey = signKey(n.negotiateFlags, n.exportedSessionKey, "Server")
 	n.clientSealingKey = sealKey(n.negotiateFlags, n.exportedSessionKey, "Client")
@@ -97,6 +105,9 @@ func (n *V1Session) Sign(message []byte) ([]byte, error) {
 
 func (n *V1Session) Mac(message []byte, sequenceNumber int) ([]byte, error) {
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
+	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) {
+		n.serverHandle, _ = reinitSealingKey(n.serverSealingKey, sequenceNumber)
+	}
 	sig := mac(n.negotiateFlags, n.serverHandle, n.serverSigningKey, uint32(sequenceNumber), message)
 	return sig.Bytes(), nil
 }
@@ -117,6 +128,10 @@ func (n *V1ServerSession) ProcessNegotiateMessage(nm *messages.Negotiate) (err e
 func (n *V1ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, err error) {
 	// TODO: Generate this challenge message
 	return
+}
+
+func (n *V1ServerSession) SetServerChallenge(challenge []byte) {
+	n.serverChallenge = challenge
 }
 
 func (n *V1ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) (err error) {
@@ -159,7 +174,7 @@ func (n *V1ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) 
 		return err
 	}
 
-	err = n.calculateKeys()
+	err = n.calculateKeys(am.Version.NTLMRevisionCurrent)
 	if err != nil {
 		return err
 	}
@@ -214,7 +229,8 @@ func (n *V1ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err e
 	flags := uint32(0)
 	flags = messages.NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
 	// NOTE: Unsetting this flag in order to get the server to generate the signatures we can recognize
-	// flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_TARGET_INFO.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_IDENTIFY.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_ALWAYS_SIGN.Set(flags)
@@ -251,7 +267,7 @@ func (n *V1ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err e
 		return err
 	}
 
-	err = n.calculateKeys()
+	err = n.calculateKeys(cm.Version.NTLMRevisionCurrent)
 	if err != nil {
 		return err
 	}

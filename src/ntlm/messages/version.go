@@ -38,7 +38,7 @@ func (v *VersionStruct) Bytes() []byte {
 	binary.Write(buffer, binary.LittleEndian, v.ProductMinorVersion)
 	binary.Write(buffer, binary.LittleEndian, v.ProductBuild)
 	buffer.Write(make([]byte, 3))
-	binary.Write(buffer, binary.LittleEndian, uint8(0x0F))
+	binary.Write(buffer, binary.LittleEndian, uint8(v.NTLMRevisionCurrent))
 
 	return buffer.Bytes()
 }

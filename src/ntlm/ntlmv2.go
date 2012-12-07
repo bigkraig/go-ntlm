@@ -3,9 +3,11 @@ package ntlm
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"ntlm/messages"
 	"strings"
+	"time"
 )
 
 /*******************************
@@ -48,7 +50,15 @@ func (n *V2Session) computeKeyExchangeKey() (err error) {
 	return
 }
 
-func (n *V2Session) calculateKeys() (err error) {
+func (n *V2Session) calculateKeys(ntlmRevisionCurrent uint8) (err error) {
+	// This lovely piece of code comes courtesy of an the excellent Open Document support system from MSFT
+	// In order to calculate the keys correctly when the client has set the NTLMRevisionCurrent to 0xF (15)
+	// We must treat the flags as if NTLMSSP_NEGOTIATE_LM_KEY is set.
+	// This information is not contained (at least currently, until they correct it) in the MS-NLMP document
+	if ntlmRevisionCurrent == 15 {
+		n.negotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Set(n.negotiateFlags)
+	}
+
 	n.clientSigningKey = signKey(n.negotiateFlags, n.exportedSessionKey, "Client")
 	n.serverSigningKey = signKey(n.negotiateFlags, n.exportedSessionKey, "Server")
 	n.clientSealingKey = sealKey(n.negotiateFlags, n.exportedSessionKey, "Client")
@@ -62,9 +72,14 @@ func (n *V2Session) Seal(message []byte) ([]byte, error) {
 func (n *V2Session) Sign(message []byte) ([]byte, error) {
 	return nil, nil
 }
+
 func (n *V2Session) Mac(message []byte, sequenceNumber int) ([]byte, error) {
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
-	return nil, nil
+	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(n.negotiateFlags) {
+		n.serverHandle, _ = reinitSealingKey(n.serverSealingKey, sequenceNumber)
+	}
+	sig := mac(n.negotiateFlags, n.serverHandle, n.serverSigningKey, uint32(sequenceNumber), message)
+	return sig.Bytes(), nil
 }
 
 /**************
@@ -73,6 +88,10 @@ func (n *V2Session) Mac(message []byte, sequenceNumber int) ([]byte, error) {
 
 type V2ServerSession struct {
 	V2Session
+}
+
+func (n *V2ServerSession) SetServerChallenge(challenge []byte) {
+	n.serverChallenge = challenge
 }
 
 func (n *V2ServerSession) ProcessNegotiateMessage(nm *messages.Negotiate) (err error) {
@@ -88,7 +107,6 @@ func (n *V2ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, er
 
 	flags := uint32(0)
 	flags = messages.NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
-	// NOTE: Unsetting this in order for the signatures to work
 	flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_TARGET_INFO.Set(flags)
@@ -99,6 +117,7 @@ func (n *V2ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, er
 	flags = messages.NTLMSSP_NEGOTIATE_SIGN.Set(flags)
 	flags = messages.NTLMSSP_REQUEST_TARGET.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
+
 	cm.NegotiateFlags = flags
 
 	n.serverChallenge = randomBytes(8)
@@ -116,7 +135,7 @@ func (n *V2ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, er
 	cm.TargetInfo = pairs
 	cm.TargetInfoPayloadStruct, _ = messages.CreateBytePayload(pairs.Bytes())
 
-	cm.Version = &messages.VersionStruct{ProductMajorVersion: uint8(6), ProductMinorVersion: uint8(0), ProductBuild: uint16(2600), NTLMRevisionCurrent: uint8(10)}
+	cm.Version = &messages.VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: uint8(15)}
 	return cm, nil
 }
 
@@ -158,7 +177,7 @@ func (n *V2ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) 
 		return err
 	}
 
-	err = n.calculateKeys()
+	err = n.calculateKeys(am.Version.NTLMRevisionCurrent)
 	if err != nil {
 		return err
 	}
@@ -213,6 +232,7 @@ func (n *V2ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err e
 	flags := uint32(0)
 	flags = messages.NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_TARGET_INFO.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_IDENTIFY.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_ALWAYS_SIGN.Set(flags)
@@ -221,6 +241,7 @@ func (n *V2ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err e
 	flags = messages.NTLMSSP_NEGOTIATE_SIGN.Set(flags)
 	flags = messages.NTLMSSP_REQUEST_TARGET.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_128.Set(flags)
 
 	n.negotiateFlags = flags
 
@@ -229,25 +250,35 @@ func (n *V2ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err e
 		return err
 	}
 
-	// TODO: Create the AvPairs and timestamp
-	/*
-		//err = n.computeExpectedResponses()
-		//if err != nil { return err }
+	timestamp := timeToWindowsFileTime(time.Now())
+	err = n.computeExpectedResponses(timestamp, cm.TargetInfoPayloadStruct.Payload)
+	if err != nil {
+		return err
+	}
 
-		err = n.computeKeyExchangeKey()
-		if err != nil { return err }
+	err = n.computeKeyExchangeKey()
+	if err != nil {
+		return err
+	}
 
-		err = n.computeEncryptedSessionKey()
-		if err != nil { return err }
+	err = n.computeEncryptedSessionKey()
+	if err != nil {
+		return err
+	}
 
-		err = n.calculateKeys()
-		if err != nil { return err }
+	err = n.calculateKeys(cm.Version.NTLMRevisionCurrent)
+	if err != nil {
+		return err
+	}
 
-		n.clientHandle, err = rc4Init(n.clientSealingKey)
-		if err != nil { return err }
-		n.serverHandle, err = rc4Init(n.serverSealingKey)
-		if err != nil { return err }
-	*/
+	n.clientHandle, err = rc4Init(n.clientSealingKey)
+	if err != nil {
+		return err
+	}
+	n.serverHandle, err = rc4Init(n.serverSealingKey)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -262,7 +293,8 @@ func (n *V2ClientSession) GenerateAuthenticateMessage() (am *messages.Authentica
 	am.Workstation, _ = messages.CreateStringPayload("SQUAREMILL")
 	am.EncryptedRandomSessionKey, _ = messages.CreateBytePayload(n.encryptedRandomSessionKey)
 	am.NegotiateFlags = n.negotiateFlags
-	am.Version = &messages.VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: uint8(15)}
+	am.Mic = make([]byte, 16)
+	am.Version = &messages.VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: 0x0F}
 	return am, nil
 }
 
@@ -283,13 +315,25 @@ func (n *V2ClientSession) computeEncryptedSessionKey() (err error) {
  NTLM V2 Password hash functions
 *********************************/
 
-// Define ntowfv2(Passwd, User, UserDom) as 
+// Define ntowfv2(Passwd, User, UserDom) as
 func ntowfv2(user string, passwd string, userDom string) []byte {
 	concat := utf16FromString(strings.ToUpper(user) + userDom)
 	return hmacMd5(md4(utf16FromString(passwd)), concat)
 }
 
-// Define lmowfv2(Passwd, User, UserDom) as 
+// Define lmowfv2(Passwd, User, UserDom) as
 func lmowfv2(user string, passwd string, userDom string) []byte {
 	return ntowfv2(user, passwd, userDom)
+}
+
+/********************************
+ Helper functions
+*********************************/
+
+func timeToWindowsFileTime(t time.Time) []byte {
+	var ll int64
+	ll = (int64(t.Unix()) * int64(10000000)) + int64(116444736000000000)
+	buffer := bytes.NewBuffer(make([]byte, 0, 8))
+	binary.Write(buffer, binary.LittleEndian, ll)
+	return buffer.Bytes()
 }

@@ -62,7 +62,7 @@ func sealKey(flags uint32, randomSessionKey []byte, mode string) (sealKey []byte
 		if messages.NTLMSSP_NEGOTIATE_56.IsSet(flags) {
 			sealKey = concat(randomSessionKey[0:7], []byte{0xA0})
 		} else {
-			sealKey = concat(randomSessionKey[0:4], []byte{0xE5, 0x38, 0xB0})
+			sealKey = concat(randomSessionKey[0:5], []byte{0xE5, 0x38, 0xB0})
 		}
 	} else {
 		sealKey = randomSessionKey
