@@ -117,6 +117,7 @@ func (n *V2ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, er
 	flags = messages.NTLMSSP_NEGOTIATE_SIGN.Set(flags)
 	flags = messages.NTLMSSP_REQUEST_TARGET.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
+	flags = messages.NTLMSSP_NEGOTIATE_128.Set(flags)
 
 	cm.NegotiateFlags = flags
 
