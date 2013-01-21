@@ -77,9 +77,9 @@ func (n *V2Session) Mac(message []byte, sequenceNumber int) ([]byte, error) {
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
 	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(n.negotiateFlags) {
 		n.serverHandle, _ = reinitSealingKey(n.serverSealingKey, sequenceNumber)
-	} else {
+	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) {
 		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the 
-		// algorithm as described in the MS-NTLM document. Just reinitialize it 
+		// algorithm as described in the MS-NTLM document. Just reinitialize it directly.
 		n.serverHandle, _ = rc4Init(n.serverSealingKey)
 	}
 	sig := mac(n.negotiateFlags, n.serverHandle, n.serverSigningKey, uint32(sequenceNumber), message)
