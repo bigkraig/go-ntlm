@@ -126,6 +126,34 @@ func TestNTLMv2(t *testing.T) {
 	if err != nil {
 		t.Errorf("Could not process server generated challenge message: %s", err)
 	}
+	// TODO: we should be able to use the ntlm library end to end to make sure
+	// that Mac, VerifyMac
+
+	// // the client should be able to verify the server's mac
+	// sig := "<NTLM><foo><bar>"
+	// mac, err := server.Mac([]byte(sig), 100)
+	// if err != nil {
+	// 	t.Errorf("Could not generate a mac for %s", sig)
+	// }
+	// matches, err := client.VerifyMac([]byte(sig), mac, 100)
+	// if err != nil {
+	// 	t.Errorf("Could not verify mac for %s (mac = %v)", sig, mac)
+	// }
+	// if !matches {
+	// 	t.Errorf("Server's Mac couldn't be verified by client")
+	// }
+
+	// mac, err = client.Mac([]byte(sig), 100)
+	// if err != nil {
+	// 	t.Errorf("Could not generate a mac for %s", sig)
+	// }
+	// matches, err = server.VerifyMac([]byte(sig), mac, 100)
+	// if err != nil {
+	// 	t.Errorf("Could not verify mac for %s (mac = %v)", sig, mac)
+	// }
+	// if !matches {
+	// 	t.Errorf("Client's Mac couldn't be verified by server")
+	// }
 }
 
 func TestWindowsTimeConversion(t *testing.T) {
