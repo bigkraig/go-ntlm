@@ -2,6 +2,7 @@
 package ntlm
 
 import (
+	rc4P "crypto/rc4"
 	"bytes"
 	"errors"
 	"ntlm/messages"
@@ -103,22 +104,33 @@ func (n *V1Session) Sign(message []byte) ([]byte, error) {
 	return nil, nil
 }
 
-func (n *V1Session) Mac(message []byte, sequenceNumber int) ([]byte, error) {
+func ntlmV1Mac(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingKey, signingKey []byte, negotiateFlags uint32) []byte {
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
-	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) {
-		n.serverHandle, _ = reinitSealingKey(n.serverSealingKey, sequenceNumber)
+	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) {
+		handle, _ = reinitSealingKey(sealingKey, sequenceNumber)
 	}
-	sig := mac(n.negotiateFlags, n.serverHandle, n.serverSigningKey, uint32(sequenceNumber), message)
-	return sig.Bytes(), nil
+	sig := mac(negotiateFlags, handle, signingKey, uint32(sequenceNumber), message)
+	return sig.Bytes()
 }
 
-func (n *V1Session) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
-	// TODO: Need to keep track of the sequence number for connection oriented NTLM
-	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) {
-		n.clientHandle, _ = reinitSealingKey(n.clientSealingKey, sequenceNumber)
-	}
-	sig := mac(n.negotiateFlags, n.clientHandle, n.clientSigningKey, uint32(sequenceNumber), message)
-	return macsEqual(sig.Bytes(), expectedMac), nil
+func (n *V1ServerSession) Mac(message []byte, sequenceNumber int) ([]byte, error) {
+	mac := ntlmV1Mac(message, sequenceNumber, n.serverHandle, n.serverSealingKey, n.serverSigningKey, n.negotiateFlags)
+	return mac, nil
+}
+
+func (n *V1ClientSession) Mac(message []byte, sequenceNumber int) ([]byte, error) {
+	mac := ntlmV1Mac(message, sequenceNumber, n.clientHandle, n.clientSealingKey, n.clientSigningKey, n.negotiateFlags)
+	return mac, nil
+}
+
+func (n *V1ServerSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
+	mac := ntlmV1Mac(message, sequenceNumber, n.clientHandle, n.clientSealingKey, n.clientSigningKey, n.negotiateFlags)
+	return macsEqual(mac, expectedMac), nil
+}
+
+func (n *V1ClientSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
+	mac := ntlmV1Mac(message, sequenceNumber, n.serverHandle, n.serverSealingKey, n.serverSigningKey, n.negotiateFlags)
+	return macsEqual(mac, expectedMac), nil
 }
 
 /**************

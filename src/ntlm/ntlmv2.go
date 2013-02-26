@@ -2,6 +2,7 @@
 package ntlm
 
 import (
+	rc4P "crypto/rc4"
 	"bytes"
 	"encoding/binary"
 	"errors"
@@ -73,30 +74,37 @@ func (n *V2Session) Sign(message []byte) ([]byte, error) {
 	return nil, nil
 }
 
-func (n *V2Session) Mac(message []byte, sequenceNumber int) ([]byte, error) {
+func ntlmV2Mac(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingKey, signingKey []byte, negotiateFlags uint32) []byte {
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
-	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(n.negotiateFlags) {
-		n.serverHandle, _ = reinitSealingKey(n.serverSealingKey, sequenceNumber)
-	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) {
+	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(negotiateFlags) {
+		handle, _ = reinitSealingKey(sealingKey, sequenceNumber)
+	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) {
 		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the 
 		// algorithm as described in the MS-NTLM document. Just reinitialize it directly.
-		n.serverHandle, _ = rc4Init(n.serverSealingKey)
+		handle, _ = rc4Init(sealingKey)
 	}
-	sig := mac(n.negotiateFlags, n.serverHandle, n.serverSigningKey, uint32(sequenceNumber), message)
-	return sig.Bytes(), nil
+	sig := mac(negotiateFlags, handle, signingKey, uint32(sequenceNumber), message)
+	return sig.Bytes()
 }
 
-func (n *V2Session) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
-	// TODO: Need to keep track of the sequence number for connection oriented NTLM
-	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(n.negotiateFlags) {
-		n.clientHandle, _ = reinitSealingKey(n.clientSealingKey, sequenceNumber)
-	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) {
-		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the 
-		// algorithm as described in the MS-NTLM document. Just reinitialize it directly.
-		n.clientHandle, _ = rc4Init(n.clientSealingKey)
-	}
-	sig := mac(n.negotiateFlags, n.clientHandle, n.clientSigningKey, uint32(sequenceNumber), message)
-	return macsEqual(sig.Bytes(), expectedMac), nil
+func (n *V2ServerSession) Mac(message []byte, sequenceNumber int) ([]byte, error) {
+	mac := ntlmV2Mac(message, sequenceNumber, n.serverHandle, n.serverSealingKey, n.serverSigningKey, n.negotiateFlags)
+	return mac, nil
+}
+
+func (n *V2ServerSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
+	mac := ntlmV2Mac(message, sequenceNumber, n.clientHandle, n.clientSealingKey, n.clientSigningKey, n.negotiateFlags)
+	return macsEqual(mac, expectedMac), nil
+}
+
+func (n *V2ClientSession) Mac(message []byte, sequenceNumber int) ([]byte, error) {
+	mac := ntlmV2Mac(message, sequenceNumber, n.clientHandle, n.clientSealingKey, n.clientSigningKey, n.negotiateFlags)
+	return mac, nil
+}
+
+func (n *V2ClientSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
+	mac := ntlmV2Mac(message, sequenceNumber, n.serverHandle, n.serverSealingKey, n.serverSigningKey, n.negotiateFlags)
+	return macsEqual(mac, expectedMac), nil
 }
 
 /**************
