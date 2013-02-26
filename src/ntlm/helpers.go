@@ -36,6 +36,21 @@ func zeroPaddedBytes(bytes []byte, offset int, size int) []byte {
 	return newSlice
 }
 
+func macsEqual(slice1, slice2 []byte) bool {
+	if len(slice1) != len(slice2) {
+		return false
+	}
+	for i := 0; i < len(slice1); i++ {
+		// bytes between 4 and 7 (inclusive) contains random
+		// data that should be ignored while comparing the
+		// macs
+		if (i < 4 || i > 7) && slice1[i] != slice2[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func utf16FromString(s string) []byte {
 	encoded := utf16.Encode([]rune(s))
 	// TODO: I'm sure there is an easier way to do the conversion from utf16 to bytes

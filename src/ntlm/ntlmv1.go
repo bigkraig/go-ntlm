@@ -112,6 +112,15 @@ func (n *V1Session) Mac(message []byte, sequenceNumber int) ([]byte, error) {
 	return sig.Bytes(), nil
 }
 
+func (n *V1Session) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
+	// TODO: Need to keep track of the sequence number for connection oriented NTLM
+	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) {
+		n.clientHandle, _ = reinitSealingKey(n.clientSealingKey, sequenceNumber)
+	}
+	sig := mac(n.negotiateFlags, n.clientHandle, n.clientSigningKey, uint32(sequenceNumber), message)
+	return macsEqual(sig.Bytes(), expectedMac), nil
+}
+
 /**************
  Server Session
 **************/

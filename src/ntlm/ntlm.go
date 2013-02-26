@@ -80,6 +80,7 @@ type ServerSession interface {
 	Seal(message []byte) ([]byte, error)
 	Sign(message []byte) ([]byte, error)
 	Mac(message []byte, sequenceNumber int) ([]byte, error)
+	VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error)
 }
 
 // This struct collects NTLM data structures and keys that are used across all types of NTLM requests

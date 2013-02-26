@@ -86,6 +86,19 @@ func (n *V2Session) Mac(message []byte, sequenceNumber int) ([]byte, error) {
 	return sig.Bytes(), nil
 }
 
+func (n *V2Session) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
+	// TODO: Need to keep track of the sequence number for connection oriented NTLM
+	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(n.negotiateFlags) {
+		n.clientHandle, _ = reinitSealingKey(n.clientSealingKey, sequenceNumber)
+	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(n.negotiateFlags) {
+		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the 
+		// algorithm as described in the MS-NTLM document. Just reinitialize it directly.
+		n.clientHandle, _ = rc4Init(n.clientSealingKey)
+	}
+	sig := mac(n.negotiateFlags, n.clientHandle, n.clientSigningKey, uint32(sequenceNumber), message)
+	return macsEqual(sig.Bytes(), expectedMac), nil
+}
+
 /**************
  Server Session
 **************/
