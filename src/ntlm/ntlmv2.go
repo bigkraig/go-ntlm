@@ -2,8 +2,8 @@
 package ntlm
 
 import (
-	rc4P "crypto/rc4"
 	"bytes"
+	rc4P "crypto/rc4"
 	"encoding/binary"
 	"errors"
 	"ntlm/messages"
@@ -30,6 +30,8 @@ func (n *V2Session) SetMode(mode Mode) {
 }
 
 func (n *V2Session) fetchResponseKeys() (err error) {
+	// Usually at this point we'd go out to Active Directory and get these keys
+	// Here we are assuming we have the information locally
 	n.responseKeyLM = lmowfv2(n.user, n.password, n.userDomain)
 	n.responseKeyNT = ntowfv2(n.user, n.password, n.userDomain)
 	return
@@ -170,6 +172,10 @@ func (n *V2ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) 
 	n.negotiateFlags = am.NegotiateFlags
 	n.clientChallenge = am.ClientChallenge()
 	n.encryptedRandomSessionKey = am.EncryptedRandomSessionKey.Payload
+	// Ignore the values used in SetUserInfo and use these instead from the authenticate message
+	// They should always be correct (I hope)
+	n.user = am.UserName.String()
+	n.userDomain = am.DomainName.String()
 
 	err = n.fetchResponseKeys()
 	if err != nil {
@@ -184,15 +190,15 @@ func (n *V2ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) 
 		return err
 	}
 
-	err = n.computeKeyExchangeKey()
-	if err != nil {
-		return err
-	}
-
 	if !bytes.Equal(am.NtChallengeResponseFields.Payload, n.ntChallengeResponse) {
 		if !bytes.Equal(am.LmChallengeResponse.Payload, n.lmChallengeResponse) {
 			return errors.New("Could not authenticate")
 		}
+	}
+
+	err = n.computeKeyExchangeKey()
+	if err != nil {
+		return err
 	}
 
 	n.mic = am.Mic
