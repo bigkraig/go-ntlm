@@ -2,6 +2,7 @@ package ntlm
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"ntlm/messages"
 	"strings"
@@ -154,6 +155,24 @@ func TestNTLMv2(t *testing.T) {
 	// if !matches {
 	// 	t.Errorf("Client's Mac couldn't be verified by server")
 	// }
+}
+
+func TestNTLMv2WithDomain(t *testing.T) {
+	authenticateMessage := "TlRMTVNTUAADAAAAGAAYALYAAADSANIAzgAAADQANABIAAAAIAAgAHwAAAAaABoAnAAAABAAEACgAQAAVYKQQgUCzg4AAAAPYQByAHIAYQB5ADEAMgAuAG0AcwBnAHQAcwB0AC4AcgBlAHUAdABlAHIAcwAuAGMAbwBtAHUAcwBlAHIAcwB0AHIAZQBzAHMAMQAwADAAMAAwADgATgBZAEMAVgBBADEAMgBTADIAQwBNAFMAQQBPYrLjU4h0YlWZeEoNvTJtBQMnnJuAeUwsP+vGmAHNRBpgZ+4ChQLqAQEAAAAAAACPFEIFjx7OAQUDJ5ybgHlMAAAAAAIADgBSAEUAVQBUAEUAUgBTAAEAHABVAEsAQgBQAC0AQwBCAFQAUgBNAEYARQAwADYABAAWAFIAZQB1AHQAZQByAHMALgBuAGUAdAADADQAdQBrAGIAcAAtAGMAYgB0AHIAbQBmAGUAMAA2AC4AUgBlAHUAdABlAHIAcwAuAG4AZQB0AAUAFgBSAGUAdQB0AGUAcgBzAC4AbgBlAHQAAAAAAAAAAAANuvnqD3K88ZpjkLleL0NW"
+
+	server := new(V2ServerSession)
+	server.SetUserInfo("blahblah", "Welcome1", "blahblah")
+
+	authenticateData, _ := base64.StdEncoding.DecodeString(authenticateMessage)
+	a, _ := messages.ParseAuthenticateMessage(authenticateData, 2)
+
+	serverChallenge, _ := hex.DecodeString("3d74b2d04ebe1eb3")
+	server.SetServerChallenge(serverChallenge)
+
+	err := server.ProcessAuthenticateMessage(a)
+	if err != nil {
+		t.Error("Could not process authenticate message: %s\n", err)
+	}
 }
 
 func TestWindowsTimeConversion(t *testing.T) {
