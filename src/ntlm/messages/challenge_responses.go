@@ -3,6 +3,7 @@ package messages
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 )
 
@@ -17,10 +18,10 @@ func (n *NtlmV1Response) String() string {
 	return fmt.Sprintf("NtlmV1Response: %s", hex.EncodeToString(n.Response))
 }
 
-func ReadNtlmV1Response(bytes []byte) *NtlmV1Response {
+func ReadNtlmV1Response(bytes []byte) (*NtlmV1Response, error) {
 	r := new(NtlmV1Response)
 	r.Response = bytes[0:24]
-	return r
+	return r, nil
 }
 
 // *** NTLMv2
@@ -80,13 +81,18 @@ func (n *NtlmV2Response) String() string {
 	return buffer.String()
 }
 
-func ReadNtlmV2Response(bytes []byte) *NtlmV2Response {
+func ReadNtlmV2Response(bytes []byte) (*NtlmV2Response, error) {
 	r := new(NtlmV2Response)
 	r.Response = bytes[0:16]
 	r.NtlmV2ClientChallenge = new(NtlmV2ClientChallenge)
 	c := r.NtlmV2ClientChallenge
 	c.RespType = bytes[16]
 	c.HiRespType = bytes[17]
+
+	if c.RespType != 1 || c.HiRespType != 1 {
+		return nil, errors.New("Does not contain a valid NTLM v2 client challenge - could be NTLMv1.")
+	}
+
 	// Ignoring - 2 bytes reserved
 	// c.Reserved1
 	// Ignoring - 4 bytes reserved
@@ -96,7 +102,7 @@ func ReadNtlmV2Response(bytes []byte) *NtlmV2Response {
 	// Ignoring - 4 bytes reserved
 	// c.Reserved3
 	c.AvPairs = ReadAvPairs(bytes[44:])
-	return r
+	return r, nil
 }
 
 // LMv1

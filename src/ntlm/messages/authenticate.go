@@ -84,9 +84,13 @@ func ParseAuthenticateMessage(body []byte, ntlmVersion int) (*Authenticate, erro
 
 	// Check to see if this is a v1 or v2 response
 	if ntlmVersion == 2 {
-		am.NtlmV2Response = ReadNtlmV2Response(am.NtChallengeResponseFields.Payload)
+		am.NtlmV2Response, err = ReadNtlmV2Response(am.NtChallengeResponseFields.Payload)
 	} else {
-		am.NtlmV1Response = ReadNtlmV1Response(am.NtChallengeResponseFields.Payload)
+		am.NtlmV1Response, err = ReadNtlmV1Response(am.NtChallengeResponseFields.Payload)
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	am.DomainName, err = ReadStringPayload(28, body)

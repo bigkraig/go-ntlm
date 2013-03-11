@@ -13,6 +13,19 @@ func checkPayloadStruct(t *testing.T, payloadStruct *PayloadStruct, len uint16, 
 	}
 }
 
+func TestParseNTLMv1AsV2(t *testing.T) {
+	ntlmv1data := "TlRMTVNTUAADAAAAGAAYALYAAAAYABgAzgAAADQANABIAAAAIAAgAHwAAAAaABoAnAAAABAAEADmAAAAVYKQQgUCzg4AAAAPYQByAHIAYQB5ADEAMgAuAG0AcwBnAHQAcwB0AC4AcgBlAHUAdABlAHIAcwAuAGMAbwBtAHUAcwBlAHIAcwB0AHIAZQBzAHMAMQAwADAAMAAwADgATgBZAEMAVgBBADEAMgBTADIAQwBNAFMAQQDguXWdC2hLH+C5dZ0LaEsf4Ll1nQtoSx9nI+fkE73qtElnkDiSQbxfcDN9zbtO1qfyK3ZTI6CUhvjxmXnpZEjY"
+	authBytes, err := base64.StdEncoding.DecodeString(ntlmv1data)
+	_, err = ParseAuthenticateMessage(authBytes, 2)
+	if err == nil {
+		t.Error("Should have returned error when tring to parse an NTLMv1 authenticate message as NTLMv2")
+	}
+	_, err = ParseAuthenticateMessage(authBytes, 1)
+	if err != nil {
+		t.Error("Should not have returned error when tring to parse an NTLMv1 authenticate message")
+	}
+}
+
 func TestAuthenticateNtlmV1(t *testing.T) {
 	authenticateMessage := "TlRMTVNTUAADAAAAGAAYAIgAAAAYABgAoAAAAAAAAABYAAAAIAAgAFgAAAAQABAAeAAAABAAEAC4AAAAVYKQYgYBsR0AAAAP2BgW++b14Dh6Z5B4Xs1DiHAAYQB1AGwAQABwAGEAdQBsAGQAaQB4AC4AbgBlAHQAVwBJAE4ANwBfAEkARQA4ACugxZFzvHB4P6LdKbbZpiYHo2ErZURLiSugxZFzvHB4P6LdKbbZpiYHo2ErZURLibmpCUlnbq2I4LAdEhLdg7I="
 	authenticateData, err := base64.StdEncoding.DecodeString(authenticateMessage)
