@@ -49,6 +49,7 @@ type ClientSession interface {
 	Seal(message []byte) ([]byte, error)
 	Sign(message []byte) ([]byte, error)
 	Mac(message []byte, sequenceNumber int) ([]byte, error)
+	VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error)
 }
 
 // Creates an NTLM v1 or v2 server
