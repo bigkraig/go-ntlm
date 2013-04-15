@@ -177,7 +177,7 @@ func (n *V2ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) 
 	// They should always be correct (I hope)
 	n.user = am.UserName.String()
 	n.userDomain = am.DomainName.String()
-	l4g.Info("NTLM User %s Domain %s", n.user, n.userDomain)
+	l4g.Info("(ProcessAuthenticateMessage)NTLM v2 User %s Domain %s", n.user, n.userDomain)
 
 	err = n.fetchResponseKeys()
 	if err != nil {
