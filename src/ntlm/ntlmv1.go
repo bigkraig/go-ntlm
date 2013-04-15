@@ -32,6 +32,10 @@ func (n *V1Session) SetMode(mode Mode) {
 	n.mode = mode
 }
 
+func (n *V1Session) Version() int {
+	return 1
+}
+
 func (n *V1Session) fetchResponseKeys() (err error) {
 	n.responseKeyLM, err = lmowfv1(n.password)
 	if err != nil {
@@ -109,10 +113,23 @@ func (n *V1Session) Sign(message []byte) ([]byte, error) {
 	return nil, nil
 }
 
-func ntlmV1Mac(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingKey, signingKey []byte, negotiateFlags uint32) []byte {
+func ntlmV1MacOld(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingKey, signingKey []byte, negotiateFlags uint32) []byte {
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
 	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) {
 		handle, _ = reinitSealingKey(sealingKey, sequenceNumber)
+	}
+	sig := mac(negotiateFlags, handle, signingKey, uint32(sequenceNumber), message)
+	return sig.Bytes()
+}
+
+func ntlmV1Mac(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingKey, signingKey []byte, negotiateFlags uint32) []byte {
+	// TODO: Need to keep track of the sequence number for connection oriented NTLM
+	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(negotiateFlags) {
+		handle, _ = reinitSealingKey(sealingKey, sequenceNumber)
+	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) {
+		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the 
+		// algorithm as described in the MS-NTLM document. Just reinitialize it directly.
+		handle, _ = rc4Init(sealingKey)
 	}
 	sig := mac(negotiateFlags, handle, signingKey, uint32(sequenceNumber), message)
 	return sig.Bytes()

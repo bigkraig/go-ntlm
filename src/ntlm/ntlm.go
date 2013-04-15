@@ -80,6 +80,7 @@ type ServerSession interface {
 	GenerateChallengeMessage() (*messages.Challenge, error)
 	ProcessAuthenticateMessage(*messages.Authenticate) error
 
+	Version() int
 	Seal(message []byte) ([]byte, error)
 	Sign(message []byte) ([]byte, error)
 	Mac(message []byte, sequenceNumber int) ([]byte, error)

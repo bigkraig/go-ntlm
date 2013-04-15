@@ -34,6 +34,10 @@ func (n *V2Session) SetMode(mode Mode) {
 	n.mode = mode
 }
 
+func (n *V2Session) Version() int {
+	return 2
+}
+
 func (n *V2Session) fetchResponseKeys() (err error) {
 	// Usually at this point we'd go out to Active Directory and get these keys
 	// Here we are assuming we have the information locally
