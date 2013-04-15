@@ -71,6 +71,8 @@ func CreateServerSession(version Version, mode Mode) (n ServerSession, err error
 
 type ServerSession interface {
 	SetUserInfo(username string, password string, domain string)
+	GetUserInfo() (string, string, string)
+
 	SetMode(mode Mode)
 	SetServerChallenge(challege []byte)
 

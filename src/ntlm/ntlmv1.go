@@ -3,10 +3,9 @@ package ntlm
 
 import (
 	"bytes"
-	//	l4g "code.google.com/p/log4go"
+	l4g "code.google.com/p/log4go"
 	rc4P "crypto/rc4"
 	"errors"
-	"fmt"
 	"ntlm/messages"
 	"strings"
 )
@@ -23,6 +22,10 @@ func (n *V1Session) SetUserInfo(username string, password string, domain string)
 	n.user = username
 	n.password = password
 	n.userDomain = domain
+}
+
+func (n *V1Session) GetUserInfo() (string, string, string) {
+	return n.user, n.password, n.userDomain
 }
 
 func (n *V1Session) SetMode(mode Mode) {
@@ -166,7 +169,7 @@ func (n *V1ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) 
 	// They should always be correct (I hope)
 	n.user = am.UserName.String()
 	n.userDomain = am.DomainName.String()
-	fmt.Printf("(ProcessAuthenticateMessage)NTLM v1 User %s Domain %s \n", n.user, n.userDomain)
+	l4g.Info("(ProcessAuthenticateMessage)NTLM v1 User %s Domain %s", n.user, n.userDomain)
 
 	err = n.fetchResponseKeys()
 	if err != nil {

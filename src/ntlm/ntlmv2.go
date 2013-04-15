@@ -26,6 +26,10 @@ func (n *V2Session) SetUserInfo(username string, password string, domain string)
 	n.userDomain = domain
 }
 
+func (n *V2Session) GetUserInfo() (string, string, string) {
+	return n.user, n.password, n.userDomain
+}
+
 func (n *V2Session) SetMode(mode Mode) {
 	n.mode = mode
 }

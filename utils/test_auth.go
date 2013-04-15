@@ -47,7 +47,7 @@ func main() {
 
 		// Message parsed correctly as NTLMv1 so assume the session is v1 and reset the server session
 		newContext, err := ntlm.CreateServerSession(ntlm.Version1, ntlm.ConnectionlessMode)
-		newContext.SetUserInfo("050045.rmwatest@reuters.com", "Welcome1", "")
+		newContext.SetUserInfo(server.GetUserInfo())
 		if err != nil {
 			fmt.Println("Could not create NTLMv1 session")
 			return
