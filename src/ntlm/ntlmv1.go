@@ -113,15 +113,6 @@ func (n *V1Session) Sign(message []byte) ([]byte, error) {
 	return nil, nil
 }
 
-func ntlmV1MacOld(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingKey, signingKey []byte, negotiateFlags uint32) []byte {
-	// TODO: Need to keep track of the sequence number for connection oriented NTLM
-	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) {
-		handle, _ = reinitSealingKey(sealingKey, sequenceNumber)
-	}
-	sig := mac(negotiateFlags, handle, signingKey, uint32(sequenceNumber), message)
-	return sig.Bytes()
-}
-
 func ntlmV1Mac(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingKey, signingKey []byte, negotiateFlags uint32) []byte {
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
 	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(negotiateFlags) {
