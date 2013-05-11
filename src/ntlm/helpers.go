@@ -36,7 +36,7 @@ func zeroPaddedBytes(bytes []byte, offset int, size int) []byte {
 	return newSlice
 }
 
-func macsEqual(slice1, slice2 []byte) bool {
+func MacsEqual(slice1, slice2 []byte) bool {
 	if len(slice1) != len(slice2) {
 		return false
 	}

@@ -15,19 +15,19 @@ func TestUTf16ToString(t *testing.T) {
 }
 
 func TestMacsEquals(t *testing.T) {
-	// the macsEqual should ignore the values in the second 4 bytes
+	// the MacsEqual should ignore the values in the second 4 bytes
 	firstSlice := []byte{0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xf0, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff}
 	secondSlice := []byte{0xf1, 0xf2, 0xf3, 0xf4, 0x00, 0x00, 0x00, 0x00, 0xf9, 0xf0, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff}
-	if !macsEqual(firstSlice, secondSlice) {
-		t.Errorf("Expected macsEqual(%v, %v) to be true", firstSlice, secondSlice)
+	if !MacsEqual(firstSlice, secondSlice) {
+		t.Errorf("Expected MacsEqual(%v, %v) to be true", firstSlice, secondSlice)
 	}
 }
 
 func TestMacsEqualsFail(t *testing.T) {
-	// the last bytes in the following test case should cause macsEqual to return false
+	// the last bytes in the following test case should cause MacsEqual to return false
 	firstSlice := []byte{0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xf0, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff}
 	secondSlice := []byte{0xf1, 0xf2, 0xf3, 0xf4, 0x00, 0x00, 0x00, 0x00, 0xf9, 0xf0, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xfe}
-	if macsEqual(firstSlice, secondSlice) {
-		t.Errorf("Expected macsEqual(%v, %v) to be false", firstSlice, secondSlice)
+	if MacsEqual(firstSlice, secondSlice) {
+		t.Errorf("Expected MacsEqual(%v, %v) to be false", firstSlice, secondSlice)
 	}
 }
