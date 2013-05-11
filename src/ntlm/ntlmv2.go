@@ -124,7 +124,7 @@ func (n *V2ServerSession) Mac(message []byte, sequenceNumber int) ([]byte, error
 
 func (n *V2ServerSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
 	mac := NtlmV2Mac(message, sequenceNumber, n.clientHandle, n.ClientSealingKey, n.ClientSigningKey, n.NegotiateFlags)
-	return macsEqual(mac, expectedMac), nil
+	return MacsEqual(mac, expectedMac), nil
 }
 
 func (n *V2ClientSession) Mac(message []byte, sequenceNumber int) ([]byte, error) {
@@ -134,7 +134,7 @@ func (n *V2ClientSession) Mac(message []byte, sequenceNumber int) ([]byte, error
 
 func (n *V2ClientSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
 	mac := NtlmV2Mac(message, sequenceNumber, n.serverHandle, n.ServerSealingKey, n.ServerSigningKey, n.NegotiateFlags)
-	return macsEqual(mac, expectedMac), nil
+	return MacsEqual(mac, expectedMac), nil
 }
 
 /**************

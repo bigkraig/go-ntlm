@@ -138,12 +138,12 @@ func (n *V1ClientSession) Mac(message []byte, sequenceNumber int) ([]byte, error
 
 func (n *V1ServerSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
 	mac := ntlmV1Mac(message, sequenceNumber, n.clientHandle, n.ClientSealingKey, n.ClientSigningKey, n.NegotiateFlags)
-	return macsEqual(mac, expectedMac), nil
+	return MacsEqual(mac, expectedMac), nil
 }
 
 func (n *V1ClientSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
 	mac := ntlmV1Mac(message, sequenceNumber, n.serverHandle, n.ServerSealingKey, n.ServerSigningKey, n.NegotiateFlags)
-	return macsEqual(mac, expectedMac), nil
+	return MacsEqual(mac, expectedMac), nil
 }
 
 /**************
