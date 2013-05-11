@@ -80,6 +80,8 @@ type ServerSession interface {
 	GenerateChallengeMessage() (*messages.Challenge, error)
 	ProcessAuthenticateMessage(*messages.Authenticate) error
 
+	GetSessionData() *SessionData
+
 	Version() int
 	Seal(message []byte) ([]byte, error)
 	Sign(message []byte) ([]byte, error)
@@ -114,10 +116,10 @@ type SessionData struct {
 	sessionBaseKey            []byte
 	mic                       []byte
 
-	clientSigningKey []byte
-	serverSigningKey []byte
-	clientSealingKey []byte
-	serverSealingKey []byte
+	ClientSigningKey []byte
+	ServerSigningKey []byte
+	ClientSealingKey []byte
+	ServerSealingKey []byte
 
 	clientHandle *rc4P.Cipher
 	serverHandle *rc4P.Cipher

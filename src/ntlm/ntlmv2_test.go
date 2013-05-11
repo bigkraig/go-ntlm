@@ -113,8 +113,8 @@ func TestNTLMv2(t *testing.T) {
 	checkV2Value(t, "NTChallengeResponse", server.ntChallengeResponse[0:16], "68cd0ab851e51c96aabc927bebef6a1c", nil)
 	checkV2Value(t, "LMChallengeResponse", server.lmChallengeResponse, "86c35097ac9cec102554764a57cccc19aaaaaaaaaaaaaaaa", nil)
 
-	checkV2Value(t, "client seal key", server.clientSealingKey, "59f600973cc4960a25480a7c196e4c58", nil)
-	checkV2Value(t, "client signing key", server.clientSigningKey, "4788dc861b4782f35d43fd98fe1a2d39", nil)
+	checkV2Value(t, "client seal key", server.ClientSealingKey, "59f600973cc4960a25480a7c196e4c58", nil)
+	checkV2Value(t, "client signing key", server.ClientSigningKey, "4788dc861b4782f35d43fd98fe1a2d39", nil)
 
 	// Have the server generate an initial challenge message
 	challenge, err := server.GenerateChallengeMessage()

@@ -203,6 +203,6 @@ func TestNTLMv1WithClientChallenge(t *testing.T) {
 		t.Errorf("Could not process authenticate message: %s", err)
 	}
 
-	checkV1Value(t, "SealKey", server.clientSealingKey, "04dd7f014d8504d265a25cc86a3a7c06", nil)
-	checkV1Value(t, "SignKey", server.clientSigningKey, "60e799be5c72fc92922ae8ebe961fb8d", nil)
+	checkV1Value(t, "SealKey", server.ClientSealingKey, "04dd7f014d8504d265a25cc86a3a7c06", nil)
+	checkV1Value(t, "SignKey", server.ClientSigningKey, "60e799be5c72fc92922ae8ebe961fb8d", nil)
 }

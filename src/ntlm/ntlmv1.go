@@ -98,10 +98,10 @@ func (n *V1Session) calculateKeys(ntlmRevisionCurrent uint8) (err error) {
 		n.negotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Set(n.negotiateFlags)
 	}
 
-	n.clientSigningKey = signKey(n.negotiateFlags, n.exportedSessionKey, "Client")
-	n.serverSigningKey = signKey(n.negotiateFlags, n.exportedSessionKey, "Server")
-	n.clientSealingKey = sealKey(n.negotiateFlags, n.exportedSessionKey, "Client")
-	n.serverSealingKey = sealKey(n.negotiateFlags, n.exportedSessionKey, "Server")
+	n.ClientSigningKey = signKey(n.negotiateFlags, n.exportedSessionKey, "Client")
+	n.ServerSigningKey = signKey(n.negotiateFlags, n.exportedSessionKey, "Server")
+	n.ClientSealingKey = sealKey(n.negotiateFlags, n.exportedSessionKey, "Client")
+	n.ServerSealingKey = sealKey(n.negotiateFlags, n.exportedSessionKey, "Server")
 	return
 }
 
@@ -118,7 +118,7 @@ func ntlmV1Mac(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingK
 	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(negotiateFlags) {
 		handle, _ = reinitSealingKey(sealingKey, sequenceNumber)
 	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) {
-		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the 
+		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the
 		// algorithm as described in the MS-NTLM document. Just reinitialize it directly.
 		handle, _ = rc4Init(sealingKey)
 	}
@@ -127,22 +127,22 @@ func ntlmV1Mac(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingK
 }
 
 func (n *V1ServerSession) Mac(message []byte, sequenceNumber int) ([]byte, error) {
-	mac := ntlmV1Mac(message, sequenceNumber, n.serverHandle, n.serverSealingKey, n.serverSigningKey, n.negotiateFlags)
+	mac := ntlmV1Mac(message, sequenceNumber, n.serverHandle, n.ServerSealingKey, n.ServerSigningKey, n.negotiateFlags)
 	return mac, nil
 }
 
 func (n *V1ClientSession) Mac(message []byte, sequenceNumber int) ([]byte, error) {
-	mac := ntlmV1Mac(message, sequenceNumber, n.clientHandle, n.clientSealingKey, n.clientSigningKey, n.negotiateFlags)
+	mac := ntlmV1Mac(message, sequenceNumber, n.clientHandle, n.ClientSealingKey, n.ClientSigningKey, n.negotiateFlags)
 	return mac, nil
 }
 
 func (n *V1ServerSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
-	mac := ntlmV1Mac(message, sequenceNumber, n.clientHandle, n.clientSealingKey, n.clientSigningKey, n.negotiateFlags)
+	mac := ntlmV1Mac(message, sequenceNumber, n.clientHandle, n.ClientSealingKey, n.ClientSigningKey, n.negotiateFlags)
 	return macsEqual(mac, expectedMac), nil
 }
 
 func (n *V1ClientSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
-	mac := ntlmV1Mac(message, sequenceNumber, n.serverHandle, n.serverSealingKey, n.serverSigningKey, n.negotiateFlags)
+	mac := ntlmV1Mac(message, sequenceNumber, n.serverHandle, n.ServerSealingKey, n.ServerSigningKey, n.negotiateFlags)
 	return macsEqual(mac, expectedMac), nil
 }
 
@@ -166,6 +166,10 @@ func (n *V1ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, er
 
 func (n *V1ServerSession) SetServerChallenge(challenge []byte) {
 	n.serverChallenge = challenge
+}
+
+func (n *V1ServerSession) GetSessionData() *SessionData {
+	return &n.SessionData
 }
 
 func (n *V1ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) (err error) {
@@ -218,11 +222,11 @@ func (n *V1ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) 
 		return err
 	}
 
-	n.clientHandle, err = rc4Init(n.clientSealingKey)
+	n.clientHandle, err = rc4Init(n.ClientSealingKey)
 	if err != nil {
 		return err
 	}
-	n.serverHandle, err = rc4Init(n.serverSealingKey)
+	n.serverHandle, err = rc4Init(n.ServerSealingKey)
 	if err != nil {
 		return err
 	}
@@ -311,11 +315,11 @@ func (n *V1ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err e
 		return err
 	}
 
-	n.clientHandle, err = rc4Init(n.clientSealingKey)
+	n.clientHandle, err = rc4Init(n.ClientSealingKey)
 	if err != nil {
 		return err
 	}
-	n.serverHandle, err = rc4Init(n.serverSealingKey)
+	n.serverHandle, err = rc4Init(n.ServerSealingKey)
 	if err != nil {
 		return err
 	}
