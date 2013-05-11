@@ -48,7 +48,7 @@ func TestNTLMv2(t *testing.T) {
 
 	//	n := new(V2Session)
 	//	n.SetUserInfo("User","Password","Domain")
-	//	n.negotiateFlags = flags
+	//	n.NegotiateFlags = flags
 	//	n.responseKeyNT, _ = hex.DecodeString("0c868a403bfd7a93a3001ef22ef02e3f")
 	//	n.responseKeyLM = n.responseKeyNT
 	//	n.clientChallenge, _ = hex.DecodeString("aaaaaaaaaaaaaaaa")
@@ -177,10 +177,10 @@ func TestNTLMv2WithDomain(t *testing.T) {
 
 func TestWindowsTimeConversion(t *testing.T) {
 	// From http://davenport.sourceforge.net/ntlm.html#theType3Message
-	// Next, the blob is constructed. The timestamp is the most tedious part of this; looking at the clock on my desk, 
-	// it's about 6:00 AM EDT on June 17th, 2003. In Unix time, that would be 1055844000 seconds after the Epoch. 
-	// Adding 11644473600 will give us seconds after January 1, 1601 (12700317600). Multiplying by 107 (10000000) 
-	// will give us tenths of a microsecond (127003176000000000). As a little-endian 64-bit value, this is 
+	// Next, the blob is constructed. The timestamp is the most tedious part of this; looking at the clock on my desk,
+	// it's about 6:00 AM EDT on June 17th, 2003. In Unix time, that would be 1055844000 seconds after the Epoch.
+	// Adding 11644473600 will give us seconds after January 1, 1601 (12700317600). Multiplying by 107 (10000000)
+	// will give us tenths of a microsecond (127003176000000000). As a little-endian 64-bit value, this is
 	// "0x0090d336b734c301" (in hexadecimal).
 	unix := time.Unix(1055844000, 0)
 	result := timeToWindowsFileTime(unix)

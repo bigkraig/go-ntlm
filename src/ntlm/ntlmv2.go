@@ -72,13 +72,13 @@ func (n *V2Session) calculateKeys(ntlmRevisionCurrent uint8) (err error) {
 	// We must treat the flags as if NTLMSSP_NEGOTIATE_LM_KEY is set.
 	// This information is not contained (at least currently, until they correct it) in the MS-NLMP document
 	if ntlmRevisionCurrent == 15 {
-		n.negotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Set(n.negotiateFlags)
+		n.NegotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Set(n.NegotiateFlags)
 	}
 
-	n.ClientSigningKey = signKey(n.negotiateFlags, n.exportedSessionKey, "Client")
-	n.ServerSigningKey = signKey(n.negotiateFlags, n.exportedSessionKey, "Server")
-	n.ClientSealingKey = sealKey(n.negotiateFlags, n.exportedSessionKey, "Client")
-	n.ServerSealingKey = sealKey(n.negotiateFlags, n.exportedSessionKey, "Server")
+	n.ClientSigningKey = signKey(n.NegotiateFlags, n.exportedSessionKey, "Client")
+	n.ServerSigningKey = signKey(n.NegotiateFlags, n.exportedSessionKey, "Server")
+	n.ClientSealingKey = sealKey(n.NegotiateFlags, n.exportedSessionKey, "Client")
+	n.ServerSealingKey = sealKey(n.NegotiateFlags, n.exportedSessionKey, "Server")
 	return
 }
 
@@ -89,36 +89,51 @@ func (n *V2Session) Sign(message []byte) ([]byte, error) {
 	return nil, nil
 }
 
-func ntlmV2Mac(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingKey, signingKey []byte, negotiateFlags uint32) []byte {
+//Mildly ghetto that we expose this
+func NtlmVCommonMac(message []byte, sequenceNumber int, sealingKey, signingKey []byte, NegotiateFlags uint32) []byte {
+	var handle *rc4P.Cipher
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
-	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(negotiateFlags) {
+	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(NegotiateFlags) {
 		handle, _ = reinitSealingKey(sealingKey, sequenceNumber)
-	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(negotiateFlags) {
+	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) {
 		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the
 		// algorithm as described in the MS-NTLM document. Just reinitialize it directly.
 		handle, _ = rc4Init(sealingKey)
 	}
-	sig := mac(negotiateFlags, handle, signingKey, uint32(sequenceNumber), message)
+	sig := mac(NegotiateFlags, handle, signingKey, uint32(sequenceNumber), message)
+	return sig.Bytes()
+}
+
+func NtlmV2Mac(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingKey, signingKey []byte, NegotiateFlags uint32) []byte {
+	// TODO: Need to keep track of the sequence number for connection oriented NTLM
+	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(NegotiateFlags) {
+		handle, _ = reinitSealingKey(sealingKey, sequenceNumber)
+	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) {
+		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the
+		// algorithm as described in the MS-NTLM document. Just reinitialize it directly.
+		handle, _ = rc4Init(sealingKey)
+	}
+	sig := mac(NegotiateFlags, handle, signingKey, uint32(sequenceNumber), message)
 	return sig.Bytes()
 }
 
 func (n *V2ServerSession) Mac(message []byte, sequenceNumber int) ([]byte, error) {
-	mac := ntlmV2Mac(message, sequenceNumber, n.serverHandle, n.ServerSealingKey, n.ServerSigningKey, n.negotiateFlags)
+	mac := NtlmV2Mac(message, sequenceNumber, n.serverHandle, n.ServerSealingKey, n.ServerSigningKey, n.NegotiateFlags)
 	return mac, nil
 }
 
 func (n *V2ServerSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
-	mac := ntlmV2Mac(message, sequenceNumber, n.clientHandle, n.ClientSealingKey, n.ClientSigningKey, n.negotiateFlags)
+	mac := NtlmV2Mac(message, sequenceNumber, n.clientHandle, n.ClientSealingKey, n.ClientSigningKey, n.NegotiateFlags)
 	return macsEqual(mac, expectedMac), nil
 }
 
 func (n *V2ClientSession) Mac(message []byte, sequenceNumber int) ([]byte, error) {
-	mac := ntlmV2Mac(message, sequenceNumber, n.clientHandle, n.ClientSealingKey, n.ClientSigningKey, n.negotiateFlags)
+	mac := NtlmV2Mac(message, sequenceNumber, n.clientHandle, n.ClientSealingKey, n.ClientSigningKey, n.NegotiateFlags)
 	return mac, nil
 }
 
 func (n *V2ClientSession) VerifyMac(message, expectedMac []byte, sequenceNumber int) (bool, error) {
-	mac := ntlmV2Mac(message, sequenceNumber, n.serverHandle, n.ServerSealingKey, n.ServerSigningKey, n.negotiateFlags)
+	mac := NtlmV2Mac(message, sequenceNumber, n.serverHandle, n.ServerSealingKey, n.ServerSigningKey, n.NegotiateFlags)
 	return macsEqual(mac, expectedMac), nil
 }
 
@@ -182,7 +197,7 @@ func (n *V2ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, er
 
 func (n *V2ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) (err error) {
 	n.authenticateMessage = am
-	n.negotiateFlags = am.NegotiateFlags
+	n.NegotiateFlags = am.NegotiateFlags
 	n.clientChallenge = am.ClientChallenge()
 	n.encryptedRandomSessionKey = am.EncryptedRandomSessionKey.Payload
 	// Ignore the values used in SetUserInfo and use these instead from the authenticate message
@@ -241,7 +256,7 @@ func (n *V2ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) 
 }
 
 func (n *V2ServerSession) computeExportedSessionKey() (err error) {
-	if messages.NTLMSSP_NEGOTIATE_KEY_EXCH.IsSet(n.negotiateFlags) {
+	if messages.NTLMSSP_NEGOTIATE_KEY_EXCH.IsSet(n.NegotiateFlags) {
 		n.exportedSessionKey, err = rc4K(n.keyExchangeKey, n.encryptedRandomSessionKey)
 		if err != nil {
 			return err
@@ -289,7 +304,7 @@ func (n *V2ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err e
 	flags = messages.NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
 	flags = messages.NTLMSSP_NEGOTIATE_128.Set(flags)
 
-	n.negotiateFlags = flags
+	n.NegotiateFlags = flags
 
 	err = n.fetchResponseKeys()
 	if err != nil {
@@ -338,14 +353,14 @@ func (n *V2ClientSession) GenerateAuthenticateMessage() (am *messages.Authentica
 	am.UserName, _ = messages.CreateStringPayload(n.user)
 	am.Workstation, _ = messages.CreateStringPayload("SQUAREMILL")
 	am.EncryptedRandomSessionKey, _ = messages.CreateBytePayload(n.encryptedRandomSessionKey)
-	am.NegotiateFlags = n.negotiateFlags
+	am.NegotiateFlags = n.NegotiateFlags
 	am.Mic = make([]byte, 16)
 	am.Version = &messages.VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: 0x0F}
 	return am, nil
 }
 
 func (n *V2ClientSession) computeEncryptedSessionKey() (err error) {
-	if messages.NTLMSSP_NEGOTIATE_KEY_EXCH.IsSet(n.negotiateFlags) {
+	if messages.NTLMSSP_NEGOTIATE_KEY_EXCH.IsSet(n.NegotiateFlags) {
 		n.exportedSessionKey = randomBytes(16)
 		n.encryptedRandomSessionKey, err = rc4K(n.keyExchangeKey, n.exportedSessionKey)
 		if err != nil {

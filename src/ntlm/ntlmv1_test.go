@@ -52,7 +52,7 @@ func TestNtlmV1(t *testing.T) {
 
 	n := new(V1ClientSession)
 	n.SetUserInfo("User", "Password", "Domain")
-	n.negotiateFlags = flags
+	n.NegotiateFlags = flags
 	n.responseKeyNT, _ = hex.DecodeString("a4f49c406510bdcab6824ee7c30fd852")
 	n.responseKeyLM, _ = hex.DecodeString("e52cac67419a9a224a3b108f3fa6cb6d")
 	n.clientChallenge, _ = hex.DecodeString("aaaaaaaaaaaaaaaa")
@@ -75,10 +75,10 @@ func TestNtlmV1(t *testing.T) {
 	checkV1Value(t, "LMChallengeResponse", n.lmChallengeResponse, "98def7b87f88aa5dafe2df779688a172def11c7d5ccdef13", err)
 
 	// If the NTLMSSP_NEGOTIATE_LM_KEY flag is set then the KeyExchangeKey is:
-	n.negotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Set(n.negotiateFlags)
+	n.NegotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Set(n.NegotiateFlags)
 	err = n.computeKeyExchangeKey()
 	checkV1Value(t, "keyExchangeKey with NTLMSSP_NEGOTIATE_LM_KEY", n.keyExchangeKey, "b09e379f7fbecb1eaf0afdcb0383c8a0", err)
-	n.negotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Unset(n.negotiateFlags)
+	n.NegotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Unset(n.NegotiateFlags)
 
 	// 4.2.2.2.3 Encrypted Session Key
 	//n.randomSessionKey, _ = hex.DecodeString("55555555555555555555555555555555")
@@ -90,20 +90,20 @@ func TestNtlmV1(t *testing.T) {
 	//checkV1Value(t, "ExportedSessionKey", n.exportedSessionKey, "55555555555555555555555555555555", err)
 
 	// NTLMSSP_REQUEST_NON_NT_SESSION_KEY is set:
-	n.negotiateFlags = messages.NTLMSSP_REQUEST_NON_NT_SESSION_KEY.Set(n.negotiateFlags)
+	n.NegotiateFlags = messages.NTLMSSP_REQUEST_NON_NT_SESSION_KEY.Set(n.NegotiateFlags)
 	err = n.computeKeyExchangeKey()
 	//	n.encryptedRandomSessionKey, err = hex.DecodeString("7452ca55c225a1ca04b48fae32cf56fc")
 	//	err = n.computeExportedSessionKey()
 	//	checkV1Value(t, "ExportedSessionKey - NTLMSSP_REQUEST_NON_NT_SESSION_KEY", n.exportedSessionKey, "55555555555555555555555555555555", err)
-	n.negotiateFlags = messages.NTLMSSP_REQUEST_NON_NT_SESSION_KEY.Unset(n.negotiateFlags)
+	n.NegotiateFlags = messages.NTLMSSP_REQUEST_NON_NT_SESSION_KEY.Unset(n.NegotiateFlags)
 
 	// NTLMSSP_NEGOTIATE_LM_KEY is set:
-	n.negotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Set(n.negotiateFlags)
+	n.NegotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Set(n.NegotiateFlags)
 	err = n.computeKeyExchangeKey()
 	//	n.encryptedRandomSessionKey, err = hex.DecodeString("4cd7bb57d697ef9b549f02b8f9b37864")
 	//	err = n.computeExportedSessionKey()
 	//	checkV1Value(t, "ExportedSessionKey - NTLMSSP_NEGOTIATE_LM_KEY", n.exportedSessionKey, "55555555555555555555555555555555", err)
-	n.negotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Unset(n.negotiateFlags)
+	n.NegotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Unset(n.NegotiateFlags)
 
 	// 4.2.2.3 Messages
 	challengeMessageBytes, _ := hex.DecodeString("4e544c4d53535000020000000c000c003800000033820a820123456789abcdef00000000000000000000000000000000060070170000000f530065007200760065007200")
@@ -155,7 +155,7 @@ func TestNTLMv1WithClientChallenge(t *testing.T) {
 	flags = messages.NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
 
 	n := new(V1Session)
-	n.negotiateFlags = flags
+	n.NegotiateFlags = flags
 	n.responseKeyNT, _ = hex.DecodeString("a4f49c406510bdcab6824ee7c30fd852")
 	n.responseKeyLM, _ = hex.DecodeString("e52cac67419a9a224a3b108f3fa6cb6d")
 	n.clientChallenge, _ = hex.DecodeString("aaaaaaaaaaaaaaaa")
