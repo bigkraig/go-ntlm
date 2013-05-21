@@ -1,5 +1,14 @@
 # NTLM Implementation for Go
 
+This is a native implementation of NTLM for Go that was implemented using the Microsoft MS-NLMP documentation available at http://msdn.microsoft.com/en-us/library/cc236621.aspx.
+The library is currently in use and has been tested with connectionless NTLMv1 and v2 with and without extended session security.
+
+## Usage Notes
+
+Currently the implementation only supports connectionless (datagram) oriented NTLM. We did not need connection oriented NTLM for our usage
+and so it is not implemented. However it should be extremely straightforward to implement connection oriented NTLM as all
+the operations required are present in the library. The major missing piece is the negotiation of capabilities between
+the client and the server, for our use we hardcoded a supported set of negotiation flags.
 
 ## Sample Usage as NTLM Client
 
