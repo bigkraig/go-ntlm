@@ -1,5 +1,6 @@
 = NTLM Implementation for Go
 
+
 == Sample Usage as NTLM Client
 
 import "ntlm"
@@ -40,3 +41,8 @@ Once a session is created you can generate the Mac for a message using:
 message := "this is some message to sign"
 sequenceNumber := 100
 signature, err := session.Mac([]byte(message), sequenceNumber)
+
+
+== License
+Copyright Thomson Reuters Global Resources 2013
+Apache License

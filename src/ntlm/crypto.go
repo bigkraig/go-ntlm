@@ -1,3 +1,4 @@
+//Copyright 2013 Thomson Reuters Global Resources.  All Rights Reserved.  Proprietary and confidential information of TRGR.  Disclosure, use, or reproduction without written authorization of TRGR is prohibited.
 package ntlm
 
 import (
@@ -67,7 +68,7 @@ func rc4(cipher *rc4P.Cipher, ciphertext []byte) []byte {
 	return result
 }
 
-// Indicates the encryption of an 8-byte data item D with the 7-byte key K using the Data Encryption Standard (DES) 
+// Indicates the encryption of an 8-byte data item D with the 7-byte key K using the Data Encryption Standard (DES)
 // algorithm in Electronic Codebook (ECB) mode. The result is 8 bytes in length ([FIPS46-2]).
 func des(key []byte, ciphertext []byte) ([]byte, error) {
 	calcKey := createDesKey(key)

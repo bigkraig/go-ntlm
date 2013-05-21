@@ -1,3 +1,4 @@
+//Copyright 2013 Thomson Reuters Global Resources.  All Rights Reserved.  Proprietary and confidential information of TRGR.  Disclosure, use, or reproduction without written authorization of TRGR is prohibited.
 package messages
 
 import (
@@ -25,7 +26,7 @@ func ReadNtlmV1Response(bytes []byte) (*NtlmV1Response, error) {
 }
 
 // *** NTLMv2
-// The NTLMv2_CLIENT_CHALLENGE structure defines the client challenge in the AUTHENTICATE_MESSAGE. 
+// The NTLMv2_CLIENT_CHALLENGE structure defines the client challenge in the AUTHENTICATE_MESSAGE.
 // This structure is used only when NTLM v2 authentication is configured.
 type NtlmV2ClientChallenge struct {
 	// An 8-bit unsigned char that contains the current version of the challenge response type.
@@ -66,7 +67,7 @@ type NtlmV2Response struct {
 	// A 16-byte array of unsigned char that contains the client's NT challenge- response as defined in section 3.3.2.
 	// Response corresponds to the NTProofStr variable from section 3.3.2.
 	Response []byte
-	// A variable-length byte array that contains the ClientChallenge as defined in section 3.3.2. 
+	// A variable-length byte array that contains the ClientChallenge as defined in section 3.3.2.
 	// ChallengeFromClient corresponds to the temp variable from section 3.3.2.
 	NtlmV2ClientChallenge *NtlmV2ClientChallenge
 }
@@ -124,9 +125,9 @@ func (l *LmV1Response) String() string {
 
 // *** LMv2
 type LmV2Response struct {
-	// A 16-byte array of unsigned char that contains the client's LM challenge-response. 
+	// A 16-byte array of unsigned char that contains the client's LM challenge-response.
 	// This is the portion of the LmChallengeResponse field to which the HMAC_MD5 algorithm
-	/// has been applied, as defined in section 3.3.2. Specifically, Response corresponds 
+	/// has been applied, as defined in section 3.3.2. Specifically, Response corresponds
 	// to the result of applying the HMAC_MD5 algorithm, using the key ResponseKeyLM, to a
 	// message consisting of the concatenation of the ResponseKeyLM, ServerChallenge and ClientChallenge.
 	Response []byte

@@ -1,3 +1,4 @@
+//Copyright 2013 Thomson Reuters Global Resources.  All Rights Reserved.  Proprietary and confidential information of TRGR.  Disclosure, use, or reproduction without written authorization of TRGR is prohibited.
 package messages
 
 type Negotiate struct {
@@ -11,11 +12,11 @@ type Negotiate struct {
 	// negotiate flags - 4bytes
 	NegotiateFlags uint32
 	// If the NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED flag is not set in NegotiateFlags,
-	// indicating that no DomainName is supplied in Payload  - then this should have Len 0 / MaxLen 0 
+	// indicating that no DomainName is supplied in Payload  - then this should have Len 0 / MaxLen 0
 	// this contains a domain name
 	DomainNameFields *PayloadStruct
-	// If the NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED flag is not set in NegotiateFlags, 
-	// indicating that no WorkstationName is supplied in Payload - then this should have Len 0 / MaxLen 0 
+	// If the NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED flag is not set in NegotiateFlags,
+	// indicating that no WorkstationName is supplied in Payload - then this should have Len 0 / MaxLen 0
 	WorkstationFields *PayloadStruct
 	// version - 8 bytes
 	Version *VersionStruct

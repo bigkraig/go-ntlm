@@ -1,3 +1,4 @@
+//Copyright 2013 Thomson Reuters Global Resources.  All Rights Reserved.  Proprietary and confidential information of TRGR.  Disclosure, use, or reproduction without written authorization of TRGR is prohibited.
 // Package NTLM implements the interfaces used for interacting with NTLMv1 and NTLMv2.
 // To create NTLM v1 or v2 sessions you would use CreateClientSession and create ClientServerSession.
 package ntlm
