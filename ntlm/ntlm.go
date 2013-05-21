@@ -6,7 +6,7 @@ package ntlm
 import (
 	rc4P "crypto/rc4"
 	"errors"
-	"ntlm/messages"
+	"github.com/ThomsonReutersEikon/go-ntlm/ntlm/messages"
 )
 
 type Version int

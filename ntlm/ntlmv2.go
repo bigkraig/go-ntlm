@@ -8,7 +8,7 @@ import (
 	rc4P "crypto/rc4"
 	"encoding/binary"
 	"errors"
-	"ntlm/messages"
+	"github.com/ThomsonReutersEikon/go-ntlm/ntlm/messages"
 	"strings"
 	"time"
 )

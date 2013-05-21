@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"ntlm"
-	"ntlm/messages"
+	"github.com/ThomsonReutersEikon/go-ntlm/ntlm"
+	"github.com/ThomsonReutersEikon/go-ntlm/ntlm/messages"
 )
 
 func main() {

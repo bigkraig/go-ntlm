@@ -7,7 +7,7 @@ import (
 	l4g "code.google.com/p/log4go"
 	rc4P "crypto/rc4"
 	"errors"
-	"ntlm/messages"
+	"github.com/ThomsonReutersEikon/go-ntlm/ntlm/messages"
 	"strings"
 )
 
