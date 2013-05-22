@@ -1,6 +1,5 @@
 //Copyright 2013 Thomson Reuters Global Resources.  All Rights Reserved.  Proprietary and confidential information of TRGR.  Disclosure, use, or reproduction without written authorization of TRGR is prohibited.
 
-// Receve an Authenticate message and authenticate the user
 package ntlm
 
 import (
