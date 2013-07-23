@@ -2,7 +2,7 @@
 
 package ntlm
 
-type Negotiate struct {
+type NegotiateMessage struct {
 	// All bytes of the message
 	Bytes []byte
 

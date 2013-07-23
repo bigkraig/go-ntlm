@@ -149,13 +149,13 @@ func (n *V2ServerSession) SetServerChallenge(challenge []byte) {
 	n.serverChallenge = challenge
 }
 
-func (n *V2ServerSession) ProcessNegotiateMessage(nm *Negotiate) (err error) {
+func (n *V2ServerSession) ProcessNegotiateMessage(nm *NegotiateMessage) (err error) {
 	n.negotiateMessage = nm
 	return
 }
 
-func (n *V2ServerSession) GenerateChallengeMessage() (cm *Challenge, err error) {
-	cm = new(Challenge)
+func (n *V2ServerSession) GenerateChallengeMessage() (cm *ChallengeMessage, err error) {
+	cm = new(ChallengeMessage)
 	cm.Signature = []byte("NTLMSSP\x00")
 	cm.MessageType = uint32(2)
 	cm.TargetName, _ = CreateBytePayload(make([]byte, 0))
@@ -195,7 +195,7 @@ func (n *V2ServerSession) GenerateChallengeMessage() (cm *Challenge, err error) 
 	return cm, nil
 }
 
-func (n *V2ServerSession) ProcessAuthenticateMessage(am *Authenticate) (err error) {
+func (n *V2ServerSession) ProcessAuthenticateMessage(am *AuthenticateMessage) (err error) {
 	n.authenticateMessage = am
 	n.NegotiateFlags = am.NegotiateFlags
 	n.clientChallenge = am.ClientChallenge()
@@ -279,11 +279,11 @@ type V2ClientSession struct {
 	V2Session
 }
 
-func (n *V2ClientSession) GenerateNegotiateMessage() (nm *Negotiate, err error) {
+func (n *V2ClientSession) GenerateNegotiateMessage() (nm *NegotiateMessage, err error) {
 	return nil, nil
 }
 
-func (n *V2ClientSession) ProcessChallengeMessage(cm *Challenge) (err error) {
+func (n *V2ClientSession) ProcessChallengeMessage(cm *ChallengeMessage) (err error) {
 	n.challengeMessage = cm
 	n.serverChallenge = cm.ServerChallenge
 	n.clientChallenge = randomBytes(8)
@@ -343,8 +343,8 @@ func (n *V2ClientSession) ProcessChallengeMessage(cm *Challenge) (err error) {
 	return nil
 }
 
-func (n *V2ClientSession) GenerateAuthenticateMessage() (am *Authenticate, err error) {
-	am = new(Authenticate)
+func (n *V2ClientSession) GenerateAuthenticateMessage() (am *AuthenticateMessage, err error) {
+	am = new(AuthenticateMessage)
 	am.Signature = []byte("NTLMSSP\x00")
 	am.MessageType = uint32(3)
 	am.LmChallengeResponse, _ = CreateBytePayload(n.lmChallengeResponse)

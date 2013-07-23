@@ -154,12 +154,12 @@ type V1ServerSession struct {
 	V1Session
 }
 
-func (n *V1ServerSession) ProcessNegotiateMessage(nm *Negotiate) (err error) {
+func (n *V1ServerSession) ProcessNegotiateMessage(nm *NegotiateMessage) (err error) {
 	n.negotiateMessage = nm
 	return
 }
 
-func (n *V1ServerSession) GenerateChallengeMessage() (cm *Challenge, err error) {
+func (n *V1ServerSession) GenerateChallengeMessage() (cm *ChallengeMessage, err error) {
 	// TODO: Generate this challenge message
 	return
 }
@@ -172,7 +172,7 @@ func (n *V1ServerSession) GetSessionData() *SessionData {
 	return &n.SessionData
 }
 
-func (n *V1ServerSession) ProcessAuthenticateMessage(am *Authenticate) (err error) {
+func (n *V1ServerSession) ProcessAuthenticateMessage(am *AuthenticateMessage) (err error) {
 	n.authenticateMessage = am
 	n.NegotiateFlags = am.NegotiateFlags
 	n.clientChallenge = am.ClientChallenge()
@@ -262,11 +262,11 @@ type V1ClientSession struct {
 	V1Session
 }
 
-func (n *V1ClientSession) GenerateNegotiateMessage() (nm *Negotiate, err error) {
+func (n *V1ClientSession) GenerateNegotiateMessage() (nm *NegotiateMessage, err error) {
 	return nil, nil
 }
 
-func (n *V1ClientSession) ProcessChallengeMessage(cm *Challenge) (err error) {
+func (n *V1ClientSession) ProcessChallengeMessage(cm *ChallengeMessage) (err error) {
 	n.challengeMessage = cm
 	n.serverChallenge = cm.ServerChallenge
 	n.clientChallenge = randomBytes(8)
@@ -331,8 +331,8 @@ func (n *V1ClientSession) ProcessChallengeMessage(cm *Challenge) (err error) {
 	return nil
 }
 
-func (n *V1ClientSession) GenerateAuthenticateMessage() (am *Authenticate, err error) {
-	am = new(Authenticate)
+func (n *V1ClientSession) GenerateAuthenticateMessage() (am *AuthenticateMessage, err error) {
+	am = new(AuthenticateMessage)
 	am.Signature = []byte("NTLMSSP\x00")
 	am.MessageType = uint32(3)
 	am.LmChallengeResponse, _ = CreateBytePayload(n.lmChallengeResponse)
