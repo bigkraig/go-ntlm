@@ -16,7 +16,7 @@ the client and the server, for our use we hardcoded a supported set of negotiati
 import "github.com/ThomsonReutersEikon/go-ntlm/ntlm"
 import "github.com/ThomsonReutersEikon/go-ntlm/ntlm/messages"
 
-session = ntlm.NewClientSession(ntlm.Version1, ntlm.ConnectionlessMode)
+session, err = ntlm.CreateClientSession(ntlm.Version2, ntlm.ConnectionlessMode)
 session.SetUserInfo("someuser","somepassword","somedomain")
 
 negotiate := session.GenerateNegotiateMessage()
@@ -34,7 +34,7 @@ authenticate := session.GenerateAuthenticateMessage()
 ## Sample Usage as NTLM Server
 
 ```go
-session = ntlm.NewServerSession(ntlm.Version1, ntlm.ConnectionlessMode)
+session, err := ntlm.CreateServerSession(ntlm.Version1, ntlm.ConnectionlessMode)
 session.SetUserInfo("someuser","somepassword","somedomain")
 
 challenge := session.GenerateChallengeMessage()
