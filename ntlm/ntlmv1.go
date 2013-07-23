@@ -205,7 +205,11 @@ func (n *V1ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) 
 	}
 
 	if !bytes.Equal(am.NtChallengeResponseFields.Payload, n.ntChallengeResponse) {
-		if !bytes.Equal(am.LmChallengeResponse.Payload, n.lmChallengeResponse) {
+		// There is a bug with the steps in MS-NLMP. In section 3.2.5.1.2 it says you should fall through
+		// to compare the lmChallengeResponse if the ntChallengeRepsonse fails, but with extended session security
+		// this would *always* pass because the lmChallengeResponse and expectedLmChallengeRepsonse will always
+		// be the same
+		if !bytes.Equal(am.LmChallengeResponse.Payload, n.lmChallengeResponse) || messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(n.NegotiateFlags) {
 			return errors.New("Could not authenticate")
 		}
 	}

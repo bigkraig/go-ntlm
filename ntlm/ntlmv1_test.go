@@ -4,6 +4,7 @@ package ntlm
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"github.com/ThomsonReutersEikon/go-ntlm/ntlm/messages"
 	"testing"
@@ -35,6 +36,34 @@ func checkV1Value(t *testing.T, name string, value []byte, expected string, err 
 		if !bytes.Equal(expectedBytes, value) {
 			t.Errorf("NTLMv1 %s is not correct got %s expected %s", name, hex.EncodeToString(value), expected)
 		}
+	}
+}
+
+// There was an issue where all NTLMv1 authentications with extended session security
+// would authenticate. This was due to a bug in the MS-NLMP docs. This tests for that issue
+func TestNtlmV1ExtendedSessionSecurity(t *testing.T) {
+	// NTLMv1 with extended session security
+  challengeMessage := "TlRMTVNTUAACAAAAAAAAADgAAABVgphiRy3oSZvn1I4AAAAAAAAAAKIAogA4AAAABQEoCgAAAA8CAA4AUgBFAFUAVABFAFIAUwABABwAVQBLAEIAUAAtAEMAQgBUAFIATQBGAEUAMAA2AAQAFgBSAGUAdQB0AGUAcgBzAC4AbgBlAHQAAwA0AHUAawBiAHAALQBjAGIAdAByAG0AZgBlADAANgAuAFIAZQB1AHQAZQByAHMALgBuAGUAdAAFABYAUgBlAHUAdABlAHIAcwAuAG4AZQB0AAAAAAA="
+  authenticateMessage := "TlRMTVNTUAADAAAAGAAYAJgAAAAYABgAsAAAAAAAAABIAAAAOgA6AEgAAAAWABYAggAAABAAEADIAAAAVYKYYgUCzg4AAAAPMQAwADAAMAAwADEALgB3AGMAcABAAHQAaABvAG0AcwBvAG4AcgBlAHUAdABlAHIAcwAuAGMAbwBtAE4AWQBDAFMATQBTAEcAOQA5ADAAOQBRWAK3h/TIywAAAAAAAAAAAAAAAAAAAAA3tp89kZU1hs1XZp7KTyGm3XsFAT9stEDW9YXDaeYVBmBcBb//2FOu"
+
+	challengeData, _ := base64.StdEncoding.DecodeString(challengeMessage)
+	c, _ := messages.ParseChallengeMessage(challengeData)
+
+  authenticateData, _ := base64.StdEncoding.DecodeString(authenticateMessage)
+  msg, err := messages.ParseAuthenticateMessage(authenticateData, 1)
+	if err != nil {
+		t.Errorf("Could not process authenticate message: %s", err)
+	}
+
+	context, err := CreateServerSession(Version1, ConnectionlessMode)
+	if err != nil {
+		t.Errorf("Could not create NTLMv1 session")
+	}
+	context.SetUserInfo("100001.wcp.thomsonreuters.com", "notmypass", "")
+	context.SetServerChallenge(c.ServerChallenge)
+	err = context.ProcessAuthenticateMessage(msg)
+	if err == nil {
+		t.Errorf("This message should have failed to authenticate, but it passed", err)
 	}
 }
 
