@@ -1,6 +1,6 @@
 //Copyright 2013 Thomson Reuters Global Resources.  All Rights Reserved.  Proprietary and confidential information of TRGR.  Disclosure, use, or reproduction without written authorization of TRGR is prohibited.
 
-package messages
+package ntlm
 
 // During NTLM authentication, each of the following flags is a possible value of the NegotiateFlags field of the NEGOTIATE_MESSAGE,
 // CHALLENGE_MESSAGE, and AUTHENTICATE_MESSAGE, unless otherwise noted. These flags define client or server NTLM capabilities
@@ -63,7 +63,7 @@ const (
 	NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED
 	// r7 (1 bit): This bit is unused and MUST be zero.
 	NTLMSSP_R7
-	// M (1 bit): If set, requests the presence of a signature block on all messages. NTLMSSP_NEGOTIATE_ALWAYS_SIGN MUST be
+	// M (1 bit): If set, requests the presence of a signature block on all  NTLMSSP_NEGOTIATE_ALWAYS_SIGN MUST be
 	// set in the NEGOTIATE_MESSAGE to the server and the CHALLENGE_MESSAGE to the client. NTLMSSP_NEGOTIATE_ALWAYS_SIGN is
 	// overridden by NTLMSSP_NEGOTIATE_SIGN and NTLMSSP_NEGOTIATE_SEAL, if they are supported. An alternate name for this field
 	// is NTLMSSP_NEGOTIATE_ALWAYS_SIGN.

@@ -1,6 +1,6 @@
 //Copyright 2013 Thomson Reuters Global Resources.  All Rights Reserved.  Proprietary and confidential information of TRGR.  Disclosure, use, or reproduction without written authorization of TRGR is prohibited.
 
-package messages
+package ntlm
 
 import (
 	"bytes"
@@ -38,7 +38,7 @@ func (p *PayloadStruct) String() string {
 
 	switch p.Type {
 	case UnicodeStringPayload:
-		returnString = Utf16ToString(p.Payload)
+		returnString = utf16ToString(p.Payload)
 	case OemStringPayload:
 		returnString = string(p.Payload)
 	case BytesPayload:
@@ -60,7 +60,7 @@ func CreateBytePayload(bytes []byte) (*PayloadStruct, error) {
 
 func CreateStringPayload(value string) (*PayloadStruct, error) {
 	// Create UTF16 unicode bytes from string
-	bytes := StringToUtf16(value)
+	bytes := utf16FromString(value)
 	p := new(PayloadStruct)
 	p.Type = UnicodeStringPayload
 	p.Len = uint16(len(bytes))

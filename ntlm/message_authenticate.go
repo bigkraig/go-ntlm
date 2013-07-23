@@ -1,6 +1,6 @@
 //Copyright 2013 Thomson Reuters Global Resources.  All Rights Reserved.  Proprietary and confidential information of TRGR.  Disclosure, use, or reproduction without written authorization of TRGR is prohibited.
 
-package messages
+package ntlm
 
 import (
 	"bytes"
@@ -38,7 +38,7 @@ type Authenticate struct {
 	/// MS-NLMP 2.2.1.3 - In connectionless mode, a NEGOTIATE structure that contains a set of bit flags (section 2.2.2.5) and represents the
 	// conclusion of negotiation—the choices the client has made from the options the server offered in the CHALLENGE_MESSAGE.
 	// In connection-oriented mode, a NEGOTIATE structure that contains the set of bit flags (section 2.2.2.5) negotiated in
-	// the previous messages.
+	// the previous 
 	NegotiateFlags uint32 // 4 bytes
 
 	// Version (8 bytes): A VERSION structure (section 2.2.2.10) that is present only when the NTLMSSP_NEGOTIATE_VERSION
@@ -216,7 +216,7 @@ func (a *Authenticate) Bytes() []byte {
 	payloadOffset += uint32(a.EncryptedRandomSessionKey.Len)
 	buffer.Write(a.EncryptedRandomSessionKey.Bytes())
 
-	buffer.Write(Uint32ToBytes(a.NegotiateFlags))
+	buffer.Write(uint32ToBytes(a.NegotiateFlags))
 
 	if a.Version != nil {
 		buffer.Write(a.Version.Bytes())

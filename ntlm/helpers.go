@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"unicode/utf16"
+	"encoding/binary"
 )
 
 // Concatenate two byte slices into a new slice
@@ -63,3 +64,26 @@ func utf16FromString(s string) []byte {
 	}
 	return result
 }
+
+// Convert a UTF16 string to UTF8 string for Go usage
+func utf16ToString(bytes []byte) string {
+       var data []uint16
+
+       // NOTE: This is definitely not the best way to do this, but when I tried using a buffer.Read I could not get it to work
+       for offset := 0; offset < len(bytes); offset = offset + 2 {
+               i := binary.LittleEndian.Uint16(bytes[offset : offset+2])
+               data = append(data, i)
+       }
+
+       return string(utf16.Decode(data))
+}
+
+func uint32ToBytes(v uint32) []byte {
+       bytes := make([]byte, 4)
+       bytes[0] = byte(v & 0xff)
+       bytes[1] = byte((v >> 8) & 0xff)
+       bytes[2] = byte((v >> 16) & 0xff)
+       bytes[3] = byte((v >> 24) & 0xff)
+       return bytes
+}
+

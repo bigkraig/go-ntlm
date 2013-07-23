@@ -7,7 +7,6 @@ package ntlm
 import (
 	rc4P "crypto/rc4"
 	"errors"
-	"github.com/ThomsonReutersEikon/go-ntlm/ntlm/messages"
 )
 
 type Version int
@@ -44,9 +43,9 @@ type ClientSession interface {
 	SetUserInfo(username string, password string, domain string)
 	SetMode(mode Mode)
 
-	GenerateNegotiateMessage() (*messages.Negotiate, error)
-	ProcessChallengeMessage(*messages.Challenge) error
-	GenerateAuthenticateMessage() (*messages.Authenticate, error)
+	GenerateNegotiateMessage() (*Negotiate, error)
+	ProcessChallengeMessage(*Challenge) error
+	GenerateAuthenticateMessage() (*Authenticate, error)
 
 	Seal(message []byte) ([]byte, error)
 	Sign(message []byte) ([]byte, error)
@@ -78,9 +77,9 @@ type ServerSession interface {
 	SetMode(mode Mode)
 	SetServerChallenge(challege []byte)
 
-	ProcessNegotiateMessage(*messages.Negotiate) error
-	GenerateChallengeMessage() (*messages.Challenge, error)
-	ProcessAuthenticateMessage(*messages.Authenticate) error
+	ProcessNegotiateMessage(*Negotiate) error
+	GenerateChallengeMessage() (*Challenge, error)
+	ProcessAuthenticateMessage(*Authenticate) error
 
 	GetSessionData() *SessionData
 
@@ -101,9 +100,9 @@ type SessionData struct {
 
 	NegotiateFlags uint32
 
-	negotiateMessage    *messages.Negotiate
-	challengeMessage    *messages.Challenge
-	authenticateMessage *messages.Authenticate
+	negotiateMessage    *Negotiate
+	challengeMessage    *Challenge
+	authenticateMessage *Authenticate
 
 	serverChallenge     []byte
 	clientChallenge     []byte

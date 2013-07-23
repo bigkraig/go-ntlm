@@ -1,6 +1,6 @@
 //Copyright 2013 Thomson Reuters Global Resources.  All Rights Reserved.  Proprietary and confidential information of TRGR.  Disclosure, use, or reproduction without written authorization of TRGR is prohibited.
 
-package messages
+package ntlm
 
 import (
 	"bytes"
@@ -140,7 +140,7 @@ func ReadAvPair(data []byte, offset int) *AvPair {
 }
 
 func (a *AvPair) UnicodeStringValue() string {
-	return Utf16ToString(a.Value)
+	return utf16ToString(a.Value)
 }
 
 func (a *AvPair) Bytes() (result []byte) {

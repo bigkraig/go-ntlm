@@ -8,7 +8,6 @@ import (
 	rc4P "crypto/rc4"
 	"encoding/binary"
 	"errors"
-	"github.com/ThomsonReutersEikon/go-ntlm/ntlm/messages"
 	"strings"
 	"time"
 )
@@ -73,7 +72,7 @@ func (n *V2Session) calculateKeys(ntlmRevisionCurrent uint8) (err error) {
 	// We must treat the flags as if NTLMSSP_NEGOTIATE_LM_KEY is set.
 	// This information is not contained (at least currently, until they correct it) in the MS-NLMP document
 	if ntlmRevisionCurrent == 15 {
-		n.NegotiateFlags = messages.NTLMSSP_NEGOTIATE_LM_KEY.Set(n.NegotiateFlags)
+		n.NegotiateFlags = NTLMSSP_NEGOTIATE_LM_KEY.Set(n.NegotiateFlags)
 	}
 
 	n.ClientSigningKey = signKey(n.NegotiateFlags, n.exportedSessionKey, "Client")
@@ -94,9 +93,9 @@ func (n *V2Session) Sign(message []byte) ([]byte, error) {
 func NtlmVCommonMac(message []byte, sequenceNumber int, sealingKey, signingKey []byte, NegotiateFlags uint32) []byte {
 	var handle *rc4P.Cipher
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
-	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(NegotiateFlags) {
+	if NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) && NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(NegotiateFlags) {
 		handle, _ = reinitSealingKey(sealingKey, sequenceNumber)
-	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) {
+	} else if NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) {
 		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the
 		// algorithm as described in the MS-NTLM document. Just reinitialize it directly.
 		handle, _ = rc4Init(sealingKey)
@@ -107,9 +106,9 @@ func NtlmVCommonMac(message []byte, sequenceNumber int, sealingKey, signingKey [
 
 func NtlmV2Mac(message []byte, sequenceNumber int, handle *rc4P.Cipher, sealingKey, signingKey []byte, NegotiateFlags uint32) []byte {
 	// TODO: Need to keep track of the sequence number for connection oriented NTLM
-	if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) && messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(NegotiateFlags) {
+	if NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) && NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.IsSet(NegotiateFlags) {
 		handle, _ = reinitSealingKey(sealingKey, sequenceNumber)
-	} else if messages.NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) {
+	} else if NTLMSSP_NEGOTIATE_DATAGRAM.IsSet(NegotiateFlags) {
 		// CONOR: Reinitializing the rc4 cipher on every requst, but not using the
 		// algorithm as described in the MS-NTLM document. Just reinitialize it directly.
 		handle, _ = rc4Init(sealingKey)
@@ -150,30 +149,30 @@ func (n *V2ServerSession) SetServerChallenge(challenge []byte) {
 	n.serverChallenge = challenge
 }
 
-func (n *V2ServerSession) ProcessNegotiateMessage(nm *messages.Negotiate) (err error) {
+func (n *V2ServerSession) ProcessNegotiateMessage(nm *Negotiate) (err error) {
 	n.negotiateMessage = nm
 	return
 }
 
-func (n *V2ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, err error) {
-	cm = new(messages.Challenge)
+func (n *V2ServerSession) GenerateChallengeMessage() (cm *Challenge, err error) {
+	cm = new(Challenge)
 	cm.Signature = []byte("NTLMSSP\x00")
 	cm.MessageType = uint32(2)
-	cm.TargetName, _ = messages.CreateBytePayload(make([]byte, 0))
+	cm.TargetName, _ = CreateBytePayload(make([]byte, 0))
 
 	flags := uint32(0)
-	flags = messages.NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_TARGET_INFO.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_IDENTIFY.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_ALWAYS_SIGN.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_NTLM.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_DATAGRAM.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_SIGN.Set(flags)
-	flags = messages.NTLMSSP_REQUEST_TARGET.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_128.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_VERSION.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_TARGET_INFO.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_IDENTIFY.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_ALWAYS_SIGN.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_NTLM.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_DATAGRAM.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_SIGN.Set(flags)
+	flags = NTLMSSP_REQUEST_TARGET.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_128.Set(flags)
 
 	cm.NegotiateFlags = flags
 
@@ -182,21 +181,21 @@ func (n *V2ServerSession) GenerateChallengeMessage() (cm *messages.Challenge, er
 	cm.Reserved = make([]byte, 8)
 
 	// Create the AvPairs we need
-	pairs := new(messages.AvPairs)
-	pairs.AddAvPair(messages.MsvAvNbDomainName, messages.StringToUtf16("REUTERS"))
-	pairs.AddAvPair(messages.MsvAvNbComputerName, messages.StringToUtf16("UKBP-CBTRMFE06"))
-	pairs.AddAvPair(messages.MsvAvDnsDomainName, messages.StringToUtf16("Reuters.net"))
-	pairs.AddAvPair(messages.MsvAvDnsComputerName, messages.StringToUtf16("ukbp-cbtrmfe06.Reuters.net"))
-	pairs.AddAvPair(messages.MsvAvDnsTreeName, messages.StringToUtf16("Reuters.net"))
-	pairs.AddAvPair(messages.MsvAvEOL, make([]byte, 0))
+	pairs := new(AvPairs)
+	pairs.AddAvPair(MsvAvNbDomainName, utf16FromString("REUTERS"))
+	pairs.AddAvPair(MsvAvNbComputerName, utf16FromString("UKBP-CBTRMFE06"))
+	pairs.AddAvPair(MsvAvDnsDomainName, utf16FromString("Reuters.net"))
+	pairs.AddAvPair(MsvAvDnsComputerName, utf16FromString("ukbp-cbtrmfe06.Reuters.net"))
+	pairs.AddAvPair(MsvAvDnsTreeName, utf16FromString("Reuters.net"))
+	pairs.AddAvPair(MsvAvEOL, make([]byte, 0))
 	cm.TargetInfo = pairs
-	cm.TargetInfoPayloadStruct, _ = messages.CreateBytePayload(pairs.Bytes())
+	cm.TargetInfoPayloadStruct, _ = CreateBytePayload(pairs.Bytes())
 
-	cm.Version = &messages.VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: uint8(15)}
+	cm.Version = &VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: uint8(15)}
 	return cm, nil
 }
 
-func (n *V2ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) (err error) {
+func (n *V2ServerSession) ProcessAuthenticateMessage(am *Authenticate) (err error) {
 	n.authenticateMessage = am
 	n.NegotiateFlags = am.NegotiateFlags
 	n.clientChallenge = am.ClientChallenge()
@@ -257,7 +256,7 @@ func (n *V2ServerSession) ProcessAuthenticateMessage(am *messages.Authenticate) 
 }
 
 func (n *V2ServerSession) computeExportedSessionKey() (err error) {
-	if messages.NTLMSSP_NEGOTIATE_KEY_EXCH.IsSet(n.NegotiateFlags) {
+	if NTLMSSP_NEGOTIATE_KEY_EXCH.IsSet(n.NegotiateFlags) {
 		n.exportedSessionKey, err = rc4K(n.keyExchangeKey, n.encryptedRandomSessionKey)
 		if err != nil {
 			return err
@@ -280,11 +279,11 @@ type V2ClientSession struct {
 	V2Session
 }
 
-func (n *V2ClientSession) GenerateNegotiateMessage() (nm *messages.Negotiate, err error) {
+func (n *V2ClientSession) GenerateNegotiateMessage() (nm *Negotiate, err error) {
 	return nil, nil
 }
 
-func (n *V2ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err error) {
+func (n *V2ClientSession) ProcessChallengeMessage(cm *Challenge) (err error) {
 	n.challengeMessage = cm
 	n.serverChallenge = cm.ServerChallenge
 	n.clientChallenge = randomBytes(8)
@@ -292,18 +291,18 @@ func (n *V2ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err e
 	// Set up the default flags for processing the response. These are the flags that we will return
 	// in the authenticate message
 	flags := uint32(0)
-	flags = messages.NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_VERSION.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_TARGET_INFO.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_IDENTIFY.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_ALWAYS_SIGN.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_NTLM.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_DATAGRAM.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_SIGN.Set(flags)
-	flags = messages.NTLMSSP_REQUEST_TARGET.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_128.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_VERSION.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_TARGET_INFO.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_IDENTIFY.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_ALWAYS_SIGN.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_NTLM.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_DATAGRAM.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_SIGN.Set(flags)
+	flags = NTLMSSP_REQUEST_TARGET.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_128.Set(flags)
 
 	n.NegotiateFlags = flags
 
@@ -344,24 +343,24 @@ func (n *V2ClientSession) ProcessChallengeMessage(cm *messages.Challenge) (err e
 	return nil
 }
 
-func (n *V2ClientSession) GenerateAuthenticateMessage() (am *messages.Authenticate, err error) {
-	am = new(messages.Authenticate)
+func (n *V2ClientSession) GenerateAuthenticateMessage() (am *Authenticate, err error) {
+	am = new(Authenticate)
 	am.Signature = []byte("NTLMSSP\x00")
 	am.MessageType = uint32(3)
-	am.LmChallengeResponse, _ = messages.CreateBytePayload(n.lmChallengeResponse)
-	am.NtChallengeResponseFields, _ = messages.CreateBytePayload(n.ntChallengeResponse)
-	am.DomainName, _ = messages.CreateStringPayload(n.userDomain)
-	am.UserName, _ = messages.CreateStringPayload(n.user)
-	am.Workstation, _ = messages.CreateStringPayload("SQUAREMILL")
-	am.EncryptedRandomSessionKey, _ = messages.CreateBytePayload(n.encryptedRandomSessionKey)
+	am.LmChallengeResponse, _ = CreateBytePayload(n.lmChallengeResponse)
+	am.NtChallengeResponseFields, _ = CreateBytePayload(n.ntChallengeResponse)
+	am.DomainName, _ = CreateStringPayload(n.userDomain)
+	am.UserName, _ = CreateStringPayload(n.user)
+	am.Workstation, _ = CreateStringPayload("SQUAREMILL")
+	am.EncryptedRandomSessionKey, _ = CreateBytePayload(n.encryptedRandomSessionKey)
 	am.NegotiateFlags = n.NegotiateFlags
 	am.Mic = make([]byte, 16)
-	am.Version = &messages.VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: 0x0F}
+	am.Version = &VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: 0x0F}
 	return am, nil
 }
 
 func (n *V2ClientSession) computeEncryptedSessionKey() (err error) {
-	if messages.NTLMSSP_NEGOTIATE_KEY_EXCH.IsSet(n.NegotiateFlags) {
+	if NTLMSSP_NEGOTIATE_KEY_EXCH.IsSet(n.NegotiateFlags) {
 		n.exportedSessionKey = randomBytes(16)
 		n.encryptedRandomSessionKey, err = rc4K(n.keyExchangeKey, n.exportedSessionKey)
 		if err != nil {
