@@ -5,7 +5,6 @@ package ntlm
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/ThomsonReutersEikon/go-ntlm/ntlm/messages"
 	"testing"
 )
 
@@ -42,7 +41,7 @@ func TestSealSignWithExtendedSessionSecurity(t *testing.T) {
 	plaintext, _ := hex.DecodeString("50006c00610069006e007400650078007400")
 	seqNum := uint32(0)
 	flags := uint32(0)
-	flags = messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
 
 	sealed, sig := seal(flags, handle, signKey, seqNum, plaintext)
 	checkSigValue(t, "Sealed Data", sealed, "a02372f6530273f3aa1eb90190ce5200c99d", nil)
@@ -57,8 +56,8 @@ func TestSealSignWithExtendedSessionSecurityKeyEx(t *testing.T) {
 	plaintext, _ := hex.DecodeString("50006c00610069006e007400650078007400")
 	seqNum := uint32(0)
 	flags := uint32(0)
-	flags = messages.NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
-	flags = messages.NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_KEY_EXCH.Set(flags)
 
 	sealed, sig := seal(flags, handle, signKey, seqNum, plaintext)
 	checkSigValue(t, "Sealed Data", sealed, "54e50165bf1936dc996020c1811b0f06fb5f", nil)

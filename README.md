@@ -14,7 +14,6 @@ the client and the server, for our use we hardcoded a supported set of negotiati
 
 ```go
 import "github.com/ThomsonReutersEikon/go-ntlm/ntlm"
-import "github.com/ThomsonReutersEikon/go-ntlm/ntlm/messages"
 
 session, err = ntlm.CreateClientSession(ntlm.Version2, ntlm.ConnectionlessMode)
 session.SetUserInfo("someuser","somepassword","somedomain")
@@ -23,7 +22,7 @@ negotiate := session.GenerateNegotiateMessage()
 
 <send negotiate to server>
 
-challenge, err := messages.ParseChallengeMessage(challengeBytes)
+challenge, err := ntlm.ParseChallengeMessage(challengeBytes)
 session.ProcessChallengeMessage(challenge)
 
 authenticate := session.GenerateAuthenticateMessage()
@@ -43,7 +42,7 @@ challenge := session.GenerateChallengeMessage()
 
 <receive authentication bytes>
 
-auth, err := messages.ParseAuthentiateMessage(authenticateBytes)
+auth, err := ntlm.ParseAuthentiateMessage(authenticateBytes)
 session.ProcessAuthenticateMessage(auth)
 ```
 

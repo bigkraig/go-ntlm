@@ -1,8 +1,8 @@
 //Copyright 2013 Thomson Reuters Global Resources.  All Rights Reserved.  Proprietary and confidential information of TRGR.  Disclosure, use, or reproduction without written authorization of TRGR is prohibited.
 
-package messages
+package ntlm
 
-type Negotiate struct {
+type NegotiateMessage struct {
 	// All bytes of the message
 	Bytes []byte
 
