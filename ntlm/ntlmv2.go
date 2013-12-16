@@ -4,10 +4,10 @@ package ntlm
 
 import (
 	"bytes"
-	l4g "code.google.com/p/log4go"
 	rc4P "crypto/rc4"
 	"encoding/binary"
 	"errors"
+	l4g "github.com/ThomsonReutersEikon/log4go"
 	"strings"
 	"time"
 )
