@@ -225,7 +225,7 @@ func (n *V1ServerSession) ProcessAuthenticateMessage(am *AuthenticateMessage) (e
 		//UGH not entirely sure how this could possibly happen, going to put this in for now
 		//TODO investigate if this ever is really happening
 		am.Version = &VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: uint8(15)}
-		log.Crit("Nil version in ntlmv1")
+		l4g.Error("Nil version in ntlmv1")
 	}
 
 	err = n.calculateKeys(am.Version.NTLMRevisionCurrent)
