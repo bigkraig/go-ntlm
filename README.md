@@ -42,7 +42,7 @@ challenge := session.GenerateChallengeMessage()
 
 <receive authentication bytes>
 
-auth, err := ntlm.ParseAuthentiateMessage(authenticateBytes)
+auth, err := ntlm.ParseAuthenticateMessage(authenticateBytes)
 session.ProcessAuthenticateMessage(auth)
 ```
 
