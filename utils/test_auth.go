@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+
 	"github.com/ThomsonReutersEikon/go-ntlm/ntlm"
 )
 

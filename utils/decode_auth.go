@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
+
+	"github.com/ThomsonReutersEikon/go-ntlm/ntlm"
 )
 
 func main() {
