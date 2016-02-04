@@ -2,6 +2,8 @@
 
 package ntlm
 
+import "bytes"
+
 type NegotiateMessage struct {
 	// All bytes of the message
 	Bytes []byte
@@ -24,4 +26,22 @@ type NegotiateMessage struct {
 	// payload - variable
 	Payload       []byte
 	PayloadOffset int
+}
+
+func (n *NegotiateMessage) String() string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString("Negotiate NTLM Message")
+	// buffer.WriteString(fmt.Sprintf("\nPayload Offset: %d Length: %d", c.getLowestPayloadOffset(), len(c.Payload)))
+	// buffer.WriteString(fmt.Sprintf("\nTargetName: %s", c.TargetName.String()))
+	// buffer.WriteString(fmt.Sprintf("\nServerChallenge: %s", hex.EncodeToString(c.ServerChallenge)))
+	// if c.Version != nil {
+	// 	buffer.WriteString(fmt.Sprintf("\nVersion: %s\n", c.Version.String()))
+	// }
+	// buffer.WriteString("\nTargetInfo")
+	// buffer.WriteString(c.TargetInfo.String())
+	// buffer.WriteString(fmt.Sprintf("\nFlags %d\n", c.NegotiateFlags))
+	// buffer.WriteString(FlagsToString(c.NegotiateFlags))
+
+	return buffer.String()
 }

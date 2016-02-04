@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"log"
+	"os"
 	"strings"
 	"time"
 )
@@ -288,7 +289,38 @@ type V2ClientSession struct {
 }
 
 func (n *V2ClientSession) GenerateNegotiateMessage() (nm *NegotiateMessage, err error) {
-	return nil, nil
+	domainName := ""
+	nm = new(NegotiateMessage)
+	nm.Signature = []byte("NTLMSSP\x00")
+	nm.MessageType = uint32(1)
+
+	flags := uint32(0)
+	flags = NTLMSSP_NEGOTIATE_UNICODE.Set(flags)
+	flags = NTLM_NEGOTIATE_OEM.Set(flags)
+	flags = NTLMSSP_REQUEST_TARGET.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_NTLM.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_ALWAYS_SIGN.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_VERSION.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_128.Set(flags)
+	flags = NTLMSSP_NEGOTIATE_56.Set(flags)
+
+	nm.NegotiateFlags = flags
+	workstation, err := os.Hostname()
+	if err != nil {
+		return
+	}
+	domainName = strings.ToUpper(domainName)
+	nm.DomainNameFields, _ = CreateStringPayload(domainName)
+
+	workstation = strings.ToUpper(workstation)
+	nm.WorkstationFields, _ = CreateStringPayload(workstation)
+
+	nm.Version = &VersionStruct{ProductMajorVersion: uint8(5), ProductMinorVersion: uint8(1), ProductBuild: uint16(2600), NTLMRevisionCurrent: 0x0F}
+
+	return nm, nil
 }
 
 func (n *V2ClientSession) ProcessChallengeMessage(cm *ChallengeMessage) (err error) {
